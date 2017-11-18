@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>
+    <Keyword>Qt4VSv1.0</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>qtmaind.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);..\External\vtk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat />
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;..\External\vtk\lib\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalDependencies>qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5OpenGL.lib;Qt5Widgets.lib;vtkalglib-8.0.lib;vtkChartsCore-8.0.lib;vtkCommonColor-8.0.lib;vtkCommonComputationalGeometry-8.0.lib;vtkCommonCore-8.0.lib;vtkCommonDataModel-8.0.lib;vtkCommonExecutionModel-8.0.lib;vtkCommonMath-8.0.lib;vtkCommonMisc-8.0.lib;vtkCommonSystem-8.0.lib;vtkCommonTransforms-8.0.lib;vtkDICOMParser-8.0.lib;vtkDomainsChemistry-8.0.lib;vtkDomainsChemistryOpenGL2-8.0.lib;vtkexoIIc-8.0.lib;vtkexpat-8.0.lib;vtkFiltersAMR-8.0.lib;vtkFiltersCore-8.0.lib;vtkFiltersExtraction-8.0.lib;vtkFiltersFlowPaths-8.0.lib;vtkFiltersGeneral-8.0.lib;vtkFiltersGeneric-8.0.lib;vtkFiltersGeometry-8.0.lib;vtkFiltersHybrid-8.0.lib;vtkFiltersHyperTree-8.0.lib;vtkFiltersImaging-8.0.lib;vtkFiltersModeling-8.0.lib;vtkFiltersParallel-8.0.lib;vtkFiltersParallelImaging-8.0.lib;vtkFiltersPoints-8.0.lib;vtkFiltersProgrammable-8.0.lib;vtkFiltersSelection-8.0.lib;vtkFiltersSMP-8.0.lib;vtkFiltersSources-8.0.lib;vtkFiltersStatistics-8.0.lib;vtkFiltersTexture-8.0.lib;vtkFiltersTopology-8.0.lib;vtkFiltersVerdict-8.0.lib;vtkfreetype-8.0.lib;vtkGeovisCore-8.0.lib;vtkgl2ps-8.0.lib;vtkglew-8.0.lib;vtkGUISupportQt-8.0.lib;vtkGUISupportQtOpenGL-8.0.lib;vtkGUISupportQtSQL-8.0.lib;vtkhdf5-8.0.lib;vtkhdf5_hl-8.0.lib;vtkImagingColor-8.0.lib;vtkImagingCore-8.0.lib;vtkImagingFourier-8.0.lib;vtkImagingGeneral-8.0.lib;vtkImagingHybrid-8.0.lib;vtkImagingMath-8.0.lib;vtkImagingMorphological-8.0.lib;vtkImagingSources-8.0.lib;vtkImagingStatistics-8.0.lib;vtkImagingStencil-8.0.lib;vtkInfovisCore-8.0.lib;vtkInfovisLayout-8.0.lib;vtkInteractionImage-8.0.lib;vtkInteractionStyle-8.0.lib;vtkInteractionWidgets-8.0.lib;vtkIOAMR-8.0.lib;vtkIOCore-8.0.lib;vtkIOEnSight-8.0.lib;vtkIOExodus-8.0.lib;vtkIOExport-8.0.lib;vtkIOExportOpenGL2-8.0.lib;vtkIOGeometry-8.0.lib;vtkIOImage-8.0.lib;vtkIOImport-8.0.lib;vtkIOInfovis-8.0.lib;vtkIOLegacy-8.0.lib;vtkIOLSDyna-8.0.lib;vtkIOMINC-8.0.lib;vtkIOMovie-8.0.lib;vtkIONetCDF-8.0.lib;vtkIOParallel-8.0.lib;vtkIOParallelXML-8.0.lib;vtkIOPLY-8.0.lib;vtkIOSQL-8.0.lib;vtkIOTecplotTable-8.0.lib;vtkIOVideo-8.0.lib;vtkIOXML-8.0.lib;vtkIOXMLParser-8.0.lib;vtkjpeg-8.0.lib;vtkjsoncpp-8.0.lib;vtklibharu-8.0.lib;vtklibxml2-8.0.lib;vtklz4-8.0.lib;vtkmetaio-8.0.lib;vtkNetCDF-8.0.lib;vtknetcdf_c++.lib;vtkoggtheora-8.0.lib;vtkParallelCore-8.0.lib;vtkpng-8.0.lib;vtkproj4-8.0.lib;vtkRenderingAnnotation-8.0.lib;vtkRenderingContext2D-8.0.lib;vtkRenderingContextOpenGL2-8.0.lib;vtkRenderingCore-8.0.lib;vtkRenderingFreeType-8.0.lib;vtkRenderingGL2PSOpenGL2-8.0.lib;vtkRenderingImage-8.0.lib;vtkRenderingLabel-8.0.lib;vtkRenderingLOD-8.0.lib;vtkRenderingOpenGL2-8.0.lib;vtkRenderingQt-8.0.lib;vtkRenderingVolume-8.0.lib;vtkRenderingVolumeOpenGL2-8.0.lib;vtksqlite-8.0.lib;vtksys-8.0.lib;vtktiff-8.0.lib;vtkverdict-8.0.lib;vtkViewsContext2D-8.0.lib;vtkViewsCore-8.0.lib;vtkViewsInfovis-8.0.lib;vtkViewsQt-8.0.lib;vtkzlib-8.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="GeneratedFiles\qrc_mesh_processing.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_mesh_processing.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mesh_processing.cpp" />
+    <ClCompile Include="vtk_widget.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="mesh_processing.h">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing mesh_processing.h...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DWIN64  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\."</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing mesh_processing.h...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I.\..\External\vtk\include"</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="mesh_processing.ui">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GeneratedFiles\ui_mesh_processing.h" />
+    <CustomBuild Include="vtk_widget.h">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="mesh_processing.qrc">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Rcc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Rcc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties MocDir=".\GeneratedFiles\$(ConfigurationName)" UicDir=".\GeneratedFiles" RccDir=".\GeneratedFiles" lupdateOptions="" lupdateOnBuild="0" lreleaseOptions="" Qt5Version_x0020_x64="Qt 5.9" MocOptions="" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
