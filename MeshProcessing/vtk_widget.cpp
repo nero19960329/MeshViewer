@@ -172,7 +172,7 @@ void VTKWidget::resetCamera() {
 void VTKWidget::initTextActor() {
 	this->bottomTextActor = vtkSmartPointer<vtkTextActor>::New();
 	this->bottomTextActor->SetInput("Number of points: 0\nNumber of faces: 0\nNumber of edges: 0");
-	this->bottomTextActor->GetTextProperty()->SetFontSize(12);
+	this->bottomTextActor->GetTextProperty()->SetFontSize(16);
 	this->bottomTextActor->GetTextProperty()->SetColor(.2, .2, .2);
 	this->bottomTextActor->GetTextProperty()->SetFontFamilyToTimes();
 	this->bottomTextActor->GetTextProperty()->BoldOn();
@@ -180,8 +180,8 @@ void VTKWidget::initTextActor() {
 
 	this->topTextActor = vtkSmartPointer<vtkTextActor>::New();
 	this->topTextActor->SetInput("Pick mode: Observe");
-	this->topTextActor->SetPosition(0, 685);
-	this->topTextActor->GetTextProperty()->SetFontSize(12);
+	this->topTextActor->SetPosition(0, 680);
+	this->topTextActor->GetTextProperty()->SetFontSize(16);
 	this->topTextActor->GetTextProperty()->SetColor(.8, .2, .2);
 	this->topTextActor->GetTextProperty()->SetFontFamilyToTimes();
 	this->topTextActor->GetTextProperty()->BoldOn();
