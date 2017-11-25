@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1024</width>
-    <height>768</height>
+    <height>793</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,13 +20,62 @@
    <string>MeshProcessing</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="VTKWidget" name="vtk_widget" native="true">
+   <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>1001</width>
-      <height>691</height>
+      <width>161</width>
+      <height>701</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>模型</string>
+     </attribute>
+     <widget class="QListWidget" name="list_widget_model">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>161</width>
+        <height>681</height>
+       </rect>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectItems</enum>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>流程</string>
+     </attribute>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="property_label">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>695</y>
+      <width>831</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="VTKWidget" name="vtk_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>10</y>
+      <width>831</width>
+      <height>701</height>
      </rect>
     </property>
    </widget>
@@ -40,6 +89,13 @@
      <height>23</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="open_file_action"/>
+   </widget>
+   <addaction name="menu"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -48,8 +104,63 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="observe_mode_action"/>
+   <addaction name="vertex_mode_action"/>
+   <addaction name="face_mode_action"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="open_file_action">
+   <property name="text">
+    <string>打开</string>
+   </property>
+  </action>
+  <action name="actionsave">
+   <property name="text">
+    <string>保存</string>
+   </property>
+  </action>
+  <action name="observe_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/observe_mode.png</normaloff>Resources/observe_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>observe_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>切换至观察模式</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="vertex_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/point_mode.png</normaloff>Resources/point_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>vertex_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>切换至点拾取模式</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="face_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/face_mode.png</normaloff>Resources/face_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>face_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>切换至面拾取模式</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
