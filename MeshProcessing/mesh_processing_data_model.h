@@ -36,5 +36,8 @@ public:
 	vtkSmartPointer<vtkActor> selected_face_actor_;
 	std::vector<vtkSmartPointer<vtkActor>> neighbor_face2_actor_vec_;
 
+	vtkIdType selected_face_id_;
+	vtkSmartPointer<vtkActor> selected_face_normal_actor_;
+
 	PickMode pick_mode_;
 };

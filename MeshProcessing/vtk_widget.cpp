@@ -149,7 +149,7 @@ void VTKWidget::updateTopText() {
 	if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::OBSERVE)
 		this->topTextActor->SetInput("Pick mode: Observe");
 	else if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::VERTEX)
-		this->topTextActor->SetInput("Pick mode: Point");
+		this->topTextActor->SetInput("Pick mode: Vertex");
 	else
 		this->topTextActor->SetInput("Pick mode: Face");
 	this->update();

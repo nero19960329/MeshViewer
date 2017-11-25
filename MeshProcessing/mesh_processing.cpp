@@ -6,6 +6,7 @@
 #include <vtkAppendPolyData.h>
 #include <vtkExtractEdges.h>
 #include <vtkMath.h>
+#include <vtkLineSource.h>
 #include <vtkOBJReader.h>
 #include <vtkPoints.h>
 #include <vtkProperty.h>
@@ -24,6 +25,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->observe_mode_action_ = ui.observe_mode_action;
 	this->vertex_mode_action_ = ui.vertex_mode_action;
 	this->face_mode_action_ = ui.face_mode_action;
+	this->display_normal_action_ = ui.display_normal_action;
 	this->list_widget_model_ = ui.list_widget_model;
 
 	this->wireframe_mode_action_->setChecked(true);
@@ -33,6 +35,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->observe_mode_action_, SIGNAL(triggered()), this, SLOT(OnObserveMode()));
 	connect(this->vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnVertexMode()));
 	connect(this->face_mode_action_, SIGNAL(triggered()), this, SLOT(OnFaceMode()));
+	connect(this->display_normal_action_, SIGNAL(triggered()), this, SLOT(OnDisplayNormal()));
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
 
 	connect(this->vtk_widget_->style, SIGNAL(selectVertex(vtkIdType)), this, SLOT(OnSelectVertex(vtkIdType)));
@@ -166,6 +169,51 @@ void MeshProcessing::OnFaceMode() {
 	this->vtk_widget_->updateTopText();
 }
 
+void MeshProcessing::OnDisplayNormal() {
+	if (this->mesh_processing_data_model_->pick_mode_ != MeshProcessingDataModel::FACE ||
+		this->mesh_processing_data_model_->selected_face_id_ == -1)
+		return;
+
+	int cellId = this->mesh_processing_data_model_->selected_face_id_;
+	vtkCell * cell = this->mesh_processing_data_model_->combined_mesh_->GetCell(cellId);
+
+	double p0[3], p1[3], p2[3];
+	this->mesh_processing_data_model_->combined_mesh_->GetPoint(cell->GetPointId(0), p0);
+	this->mesh_processing_data_model_->combined_mesh_->GetPoint(cell->GetPointId(1), p1);
+	this->mesh_processing_data_model_->combined_mesh_->GetPoint(cell->GetPointId(2), p2);
+
+	double c[3];
+	for (int i = 0; i < 3; ++i) c[i] = (p0[i] + p1[i] + p2[i]) / 3;
+
+	double p0p1[3], p0p2[3];
+	vtkMath::Subtract(p1, p0, p0p1);
+	vtkMath::Subtract(p2, p0, p0p2);
+
+	double normal[3];
+	vtkMath::Cross(p0p1, p0p2, normal);
+	vtkMath::Normalize(normal);
+
+	double constant = (
+		std::sqrt(vtkMath::Distance2BetweenPoints(p0, p1)) +
+		std::sqrt(vtkMath::Distance2BetweenPoints(p1, p2)) +
+		std::sqrt(vtkMath::Distance2BetweenPoints(p2, p0))
+	);
+	double e[3];
+	for (int i = 0; i < 3; ++i) e[i] = c[i] + constant * normal[i];
+
+	vtkSmartPointer<vtkLineSource> lineSource =
+		vtkSmartPointer<vtkLineSource>::New();
+	lineSource->SetPoint1(c);
+	lineSource->SetPoint2(e);
+	lineSource->Update();
+
+	this->mesh_processing_data_model_->selected_face_normal_actor_ = this->vtk_widget_->addActor(lineSource->GetOutput());
+	this->mesh_processing_data_model_->selected_face_normal_actor_->GetProperty()->SetColor(.8, .8, .2);
+	this->mesh_processing_data_model_->selected_face_normal_actor_->GetProperty()->SetLineWidth(5);
+
+	this->vtk_widget_->update();
+}
+
 void MeshProcessing::OnSelectVertex(vtkIdType id) {
 	this->removeVertexActors();
 
@@ -200,6 +248,8 @@ void MeshProcessing::OnSelectFace(vtkIdType id) {
 		this->mesh_processing_data_model_->neighbor_face2_actor_vec_.push_back(this->vtk_widget_->highlightFace(this->mesh_processing_data_model_->combined_mesh_, neighbor));
 		this->mesh_processing_data_model_->neighbor_face2_actor_vec_.back()->GetProperty()->SetColor(.8, .8, .2);
 	}
+
+	this->mesh_processing_data_model_->selected_face_id_ = id;
 
 	this->vtk_widget_->update();
 }
@@ -245,4 +295,5 @@ void MeshProcessing::removeFaceActors() {
 	this->vtk_widget_->removeActor(this->mesh_processing_data_model_->selected_face_actor_);
 	for (const auto & actor : this->mesh_processing_data_model_->neighbor_face2_actor_vec_)
 		this->vtk_widget_->removeActor(actor);
+	this->vtk_widget_->removeActor(this->mesh_processing_data_model_->selected_face_normal_actor_);
 }

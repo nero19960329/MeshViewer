@@ -109,6 +109,8 @@
    <addaction name="observe_mode_action"/>
    <addaction name="vertex_mode_action"/>
    <addaction name="face_mode_action"/>
+   <addaction name="separator"/>
+   <addaction name="display_normal_action"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="open_file_action">
@@ -176,6 +178,18 @@
    </property>
    <property name="toolTip">
     <string>开启/关闭线框模式</string>
+   </property>
+  </action>
+  <action name="display_normal_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/display_normal.png</normaloff>Resources/display_normal.png</iconset>
+   </property>
+   <property name="text">
+    <string>display_normal</string>
+   </property>
+   <property name="toolTip">
+    <string>显示选中面片的法向</string>
    </property>
   </action>
  </widget>

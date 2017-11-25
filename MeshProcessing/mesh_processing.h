@@ -27,6 +27,7 @@ private:
 	QAction * observe_mode_action_;
 	QAction * vertex_mode_action_;
 	QAction * face_mode_action_;
+	QAction * display_normal_action_;
 
 	QListWidget * list_widget_model_;
 
@@ -37,6 +38,7 @@ public slots:
 	void OnObserveMode();
 	void OnVertexMode();
 	void OnFaceMode();
+	void OnDisplayNormal();
 
 	void OnSelectVertex(vtkIdType id);
 	void OnSelectFace(vtkIdType id);

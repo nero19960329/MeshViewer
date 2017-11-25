@@ -4,6 +4,8 @@ MeshProcessingDataModel * MeshProcessingDataModel::instance_ = nullptr;
 
 MeshProcessingDataModel::MeshProcessingDataModel() {
 	this->combined_mesh_ = vtkSmartPointer<vtkPolyData>::New();
+	this->selected_face_normal_actor_ = nullptr;
+	this->selected_face_id_ = -1;
 }
 
 MeshProcessingDataModel::~MeshProcessingDataModel() {}
