@@ -54,6 +54,28 @@ vtkSmartPointer<vtkActor> VTKWidget::addActor(vtkSmartPointer<vtkPolyData> mesh)
 	return actor;
 }
 
+vtkSmartPointer<vtkActor> VTKWidget::addWireFrameActor(vtkSmartPointer<vtkPolyData> mesh) {
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputData(mesh);
+
+	vtkSmartPointer<vtkActor> actor =
+		vtkSmartPointer<vtkActor>::New();
+	actor->GetProperty()->SetAmbient(1.0);
+	actor->GetProperty()->SetDiffuse(0.0);
+	actor->GetProperty()->SetSpecular(0.0);
+	actor->SetMapper(mapper);
+	actor->GetProperty()->SetRepresentationToWireframe();
+	actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
+	actor->GetProperty()->SetLineWidth(2);
+	actor->PickableOff();
+
+	this->renderer->AddActor(actor);
+	this->update();
+
+	return actor;
+}
+
 void VTKWidget::removeActor(vtkSmartPointer<vtkActor> actor) {
 	this->renderer->RemoveActor(actor);
 }

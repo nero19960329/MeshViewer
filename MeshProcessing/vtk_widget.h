@@ -34,6 +34,7 @@ public:
 
 public:
 	vtkSmartPointer<vtkActor> addActor(vtkSmartPointer<vtkPolyData> mesh);
+	vtkSmartPointer<vtkActor> addWireFrameActor(vtkSmartPointer<vtkPolyData> mesh);
 	void removeActor(vtkSmartPointer<vtkActor> actor);
 
 	void highlightMesh(vtkSmartPointer<vtkActor> actor);

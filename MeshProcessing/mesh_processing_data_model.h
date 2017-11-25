@@ -23,6 +23,7 @@ public:
 	std::vector<vtkSmartPointer<vtkPolyData>> mesh_vec_;
 	std::vector<vtkSmartPointer<vtkPolyData>> mesh_edge_vec_;
 	std::vector<vtkSmartPointer<vtkActor>> actor_vec_;
+	std::vector<vtkSmartPointer<vtkActor>> wireframe_actor_vec_;
 	std::vector<int> highlight_vec_;
 	std::vector<double> mean_edge_length_vec_;
 

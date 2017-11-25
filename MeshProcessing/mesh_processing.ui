@@ -104,6 +104,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="wireframe_mode_action"/>
+   <addaction name="separator"/>
    <addaction name="observe_mode_action"/>
    <addaction name="vertex_mode_action"/>
    <addaction name="face_mode_action"/>
@@ -159,6 +161,21 @@
    </property>
    <property name="toolTip">
     <string>切换至面拾取模式</string>
+   </property>
+  </action>
+  <action name="wireframe_mode_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/wireframe_mode.png</normaloff>Resources/wireframe_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>wireframe_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>开启/关闭线框模式</string>
    </property>
   </action>
  </widget>

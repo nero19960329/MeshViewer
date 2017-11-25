@@ -23,6 +23,7 @@ private:
 	VTKWidget * vtk_widget_;
 
 	QAction * open_file_action_;
+	QAction * wireframe_mode_action_;
 	QAction * observe_mode_action_;
 	QAction * vertex_mode_action_;
 	QAction * face_mode_action_;
@@ -32,6 +33,7 @@ private:
 public slots:
 	void OnOpenFile();
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
+	void OnWireframeMode();
 	void OnObserveMode();
 	void OnVertexMode();
 	void OnFaceMode();

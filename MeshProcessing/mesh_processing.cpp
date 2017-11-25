@@ -20,12 +20,16 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->mesh_processing_data_model_ = MeshProcessingDataModel::getInstance();
 	this->vtk_widget_ = ui.vtk_widget;
 	this->open_file_action_ = ui.open_file_action;
+	this->wireframe_mode_action_ = ui.wireframe_mode_action;
 	this->observe_mode_action_ = ui.observe_mode_action;
 	this->vertex_mode_action_ = ui.vertex_mode_action;
 	this->face_mode_action_ = ui.face_mode_action;
 	this->list_widget_model_ = ui.list_widget_model;
 
+	this->wireframe_mode_action_->setChecked(true);
+
 	connect(this->open_file_action_, SIGNAL(triggered()), this, SLOT(OnOpenFile()));
+	connect(this->wireframe_mode_action_, SIGNAL(triggered()), this, SLOT(OnWireframeMode()));
 	connect(this->observe_mode_action_, SIGNAL(triggered()), this, SLOT(OnObserveMode()));
 	connect(this->vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnVertexMode()));
 	connect(this->face_mode_action_, SIGNAL(triggered()), this, SLOT(OnFaceMode()));
@@ -78,7 +82,10 @@ void MeshProcessing::OnOpenFile() {
 		auto actor = this->vtk_widget_->addActor(mesh);
 		this->vtk_widget_->highlightMesh(actor);
 
+		auto wireframe_actor = this->vtk_widget_->addWireFrameActor(mesh);
+
 		this->mesh_processing_data_model_->mesh_vec_.push_back(mesh);
+		this->mesh_processing_data_model_->wireframe_actor_vec_.push_back(wireframe_actor);
 		this->mesh_processing_data_model_->actor_vec_.push_back(actor);
 		this->mesh_processing_data_model_->highlight_vec_.push_back(1);
 
@@ -130,6 +137,13 @@ void MeshProcessing::OnListWidgetModelItemChanged(QListWidgetItem * item) {
 
 	this->resetParameters();
 
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnWireframeMode() {
+	bool isChecked = this->wireframe_mode_action_->isChecked();
+	for (auto actor : this->mesh_processing_data_model_->wireframe_actor_vec_)
+		actor->SetVisibility(isChecked);
 	this->vtk_widget_->update();
 }
 
@@ -214,6 +228,8 @@ void MeshProcessing::resetParameters() {
 
 void MeshProcessing::removeMeshActors() {
 	for (const auto & actor : this->mesh_processing_data_model_->actor_vec_)
+		this->vtk_widget_->removeActor(actor);
+	for (const auto & actor : this->mesh_processing_data_model_->wireframe_actor_vec_)
 		this->vtk_widget_->removeActor(actor);
 }
 
