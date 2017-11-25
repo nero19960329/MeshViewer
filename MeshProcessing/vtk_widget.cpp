@@ -41,7 +41,7 @@ vtkSmartPointer<vtkActor> VTKWidget::addActor(vtkSmartPointer<vtkPolyData> mesh)
 
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();
-	actor->GetProperty()->SetAmbient(0.5);
+	actor->GetProperty()->SetAmbient(0.2);
 	actor->GetProperty()->SetDiffuse(0.6);
 	actor->GetProperty()->SetSpecular(0.3);
 	actor->SetMapper(mapper);
@@ -58,6 +58,7 @@ vtkSmartPointer<vtkActor> VTKWidget::addWireFrameActor(vtkSmartPointer<vtkPolyDa
 	vtkSmartPointer<vtkPolyDataMapper> mapper =
 		vtkSmartPointer<vtkPolyDataMapper>::New();
 	mapper->SetInputData(mesh);
+	mapper->SetScalarVisibility(false);
 
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();
@@ -81,11 +82,19 @@ void VTKWidget::removeActor(vtkSmartPointer<vtkActor> actor) {
 }
 
 void VTKWidget::highlightMesh(vtkSmartPointer<vtkActor> actor) {
-	actor->GetProperty()->SetColor(0.0, 0.5, 1.0);
+	if (this->mesh_processing_data_model_->display_mode_ == MeshProcessingDataModel::DEFAULT) {
+		actor->GetProperty()->SetColor(0.0, 0.5, 1.0);
+		actor->GetMapper()->SetScalarVisibility(false);
+	} else {
+		actor->GetProperty()->SetColor(0.0, 0.0, 0.0);
+		actor->GetMapper()->SetScalarVisibility(true);
+	}
 }
 
 void VTKWidget::unhighlightMesh(vtkSmartPointer<vtkActor> actor) {
 	actor->GetProperty()->SetColor(0.4, 0.4, 0.4);
+	if (this->mesh_processing_data_model_->display_mode_ != MeshProcessingDataModel::DEFAULT)
+		actor->GetMapper()->SetScalarVisibility(false);
 }
 
 vtkSmartPointer<vtkActor> VTKWidget::highlightVertex(vtkSmartPointer<vtkPolyData> mesh, vtkIdType id) {
@@ -129,6 +138,7 @@ vtkSmartPointer<vtkActor> VTKWidget::highlightFace(vtkSmartPointer<vtkPolyData> 
 	vtkSmartPointer<vtkDataSetMapper> mapper =
 		vtkSmartPointer<vtkDataSetMapper>::New();
 	mapper->SetInputData(selected);
+	mapper->SetScalarVisibility(false);
 
 	vtkSmartPointer<vtkActor> actor =
 		vtkSmartPointer<vtkActor>::New();

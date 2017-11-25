@@ -17,7 +17,7 @@ VTK_MODULE_INIT(vtkInteractionStyle);
 VTK_MODULE_INIT(vtkRenderingFreeType);
 
 class VTKWidget : public QVTKWidget {
-protected:
+public:
 	MeshProcessingDataModel * mesh_processing_data_model_;
 
 	vtkSmartPointer<vtkRenderer> renderer;

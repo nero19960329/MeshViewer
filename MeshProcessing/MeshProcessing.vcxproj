@@ -70,6 +70,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="color_table_reader.cpp" />
     <ClCompile Include="GeneratedFiles\qrc_mesh_processing.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeader>
@@ -115,6 +116,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="color_table_reader.h" />
     <ClInclude Include="GeneratedFiles\ui_mesh_processing.h" />
     <ClInclude Include="mesh_operation.h" />
     <ClInclude Include="mesh_processing_data_model.h" />

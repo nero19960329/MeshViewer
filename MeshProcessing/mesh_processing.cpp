@@ -2,14 +2,18 @@
 
 #include <QtCore/QStringList>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 
 #include <vtkAppendPolyData.h>
 #include <vtkExtractEdges.h>
 #include <vtkMath.h>
 #include <vtkLineSource.h>
+#include <vtkLookupTable.h>
 #include <vtkOBJReader.h>
 #include <vtkPoints.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkScalarBarActor.h>
 #include <vtkSphereSource.h>
 
 #include "mesh_operation.h"
@@ -19,23 +23,35 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
 	this->mesh_processing_data_model_ = MeshProcessingDataModel::getInstance();
+	this->color_table_reader_ = new ColorTableReader;
 	this->vtk_widget_ = ui.vtk_widget;
 	this->open_file_action_ = ui.open_file_action;
+	this->read_color_table_action_ = ui.read_color_table_action;
 	this->wireframe_mode_action_ = ui.wireframe_mode_action;
 	this->observe_mode_action_ = ui.observe_mode_action;
 	this->vertex_mode_action_ = ui.vertex_mode_action;
 	this->face_mode_action_ = ui.face_mode_action;
 	this->display_normal_action_ = ui.display_normal_action;
+	this->default_mode_action_ = ui.default_mode_action;
+	this->discrete_mode_action_ = ui.discrete_mode_action;
+	this->continuous_mode_action_ = ui.continuous_mode_action;
 	this->list_widget_model_ = ui.list_widget_model;
 
 	this->wireframe_mode_action_->setChecked(true);
+	this->default_mode_action_->setEnabled(false);
+	this->discrete_mode_action_->setEnabled(false);
+	this->continuous_mode_action_->setEnabled(false);
 
 	connect(this->open_file_action_, SIGNAL(triggered()), this, SLOT(OnOpenFile()));
+	connect(this->read_color_table_action_, SIGNAL(triggered()), this, SLOT(OnReadColorTable()));
 	connect(this->wireframe_mode_action_, SIGNAL(triggered()), this, SLOT(OnWireframeMode()));
 	connect(this->observe_mode_action_, SIGNAL(triggered()), this, SLOT(OnObserveMode()));
 	connect(this->vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnVertexMode()));
 	connect(this->face_mode_action_, SIGNAL(triggered()), this, SLOT(OnFaceMode()));
 	connect(this->display_normal_action_, SIGNAL(triggered()), this, SLOT(OnDisplayNormal()));
+	connect(this->default_mode_action_, SIGNAL(triggered()), this, SLOT(OnDefaultMode()));
+	connect(this->discrete_mode_action_, SIGNAL(triggered()), this, SLOT(OnDiscreteMode()));
+	connect(this->continuous_mode_action_, SIGNAL(triggered()), this, SLOT(OnContinuousMode()));
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
 
 	connect(this->vtk_widget_->style, SIGNAL(selectVertex(vtkIdType)), this, SLOT(OnSelectVertex(vtkIdType)));
@@ -127,20 +143,61 @@ void MeshProcessing::OnOpenFile() {
 	this->vtk_widget_->resetCamera();
 }
 
-void MeshProcessing::OnListWidgetModelItemChanged(QListWidgetItem * item) {
-	int row_id = this->list_widget_model_->row(item);
-	
-	if (item->checkState() == Qt::Unchecked) {
-		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[row_id]);
-		this->mesh_processing_data_model_->highlight_vec_[row_id] = 0;
-	} else {
-		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[row_id]);
-		this->mesh_processing_data_model_->highlight_vec_[row_id] = 1;
+void MeshProcessing::OnReadColorTable() {
+	if (this->mesh_processing_data_model_->mesh_vec_.size() != 1) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查目前读入的网格数是否为1！"));
+		return;
 	}
 
-	this->resetParameters();
+	QString file_path = QFileDialog::getOpenFileName(this, QString::fromLocal8Bit("打开文件"), "../", tr("txt Files(*.txt)"));
+	if (file_path.size() == 0) return;
 
-	this->vtk_widget_->update();
+	this->color_table_reader_->setColorTableName(file_path);
+	this->color_table_reader_->setMesh(this->mesh_processing_data_model_->mesh_vec_[0]);
+	if (this->color_table_reader_->read() == false) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查颜色表文件是否正确！"));
+		return;
+	}
+
+	this->default_mode_action_->setEnabled(true);
+	this->discrete_mode_action_->setEnabled(true);
+	this->continuous_mode_action_->setEnabled(true);
+
+	/*ColorTableReader reader;
+	reader.setColorTableName(file_path);
+	reader.setMesh(this->mesh_processing_data_model_->mesh_vec_[0]);
+	auto mesh = reader.read();
+
+	vtkSmartPointer<vtkLookupTable> hueLut =
+		vtkSmartPointer<vtkLookupTable>::New();
+	hueLut->SetHueRange(0, 1);
+	hueLut->SetSaturationRange(1, 1);
+	hueLut->SetValueRange(1, 1);
+	hueLut->Build();
+
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputData(mesh);
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarModeToUseCellData();
+	mapper->SetColorModeToMapScalars();
+	mapper->SetLookupTable(hueLut);
+
+	this->mesh_processing_data_model_->actor_vec_[0]->SetMapper(mapper);
+	this->mesh_processing_data_model_->actor_vec_[0]->GetProperty()->SetColor(.0, .0, .0);
+
+	vtkSmartPointer<vtkScalarBarActor> scalarBar =
+		vtkSmartPointer<vtkScalarBarActor>::New();
+	scalarBar->SetLookupTable(hueLut);
+	scalarBar->SetTitle("Color Map");
+	scalarBar->SetNumberOfLabels(4);
+
+	this->vtk_widget_->renderer->AddActor2D(scalarBar);
+
+	if (mesh == nullptr) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查颜色表文件是否正确！"));
+		return;
+	}*/
 }
 
 void MeshProcessing::OnWireframeMode() {
@@ -214,6 +271,91 @@ void MeshProcessing::OnDisplayNormal() {
 	this->vtk_widget_->update();
 }
 
+void MeshProcessing::OnDefaultMode() {
+	this->mesh_processing_data_model_->display_mode_ = MeshProcessingDataModel::DEFAULT;
+	if (this->mesh_processing_data_model_->highlight_vec_[0] == 1)
+		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	else
+		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnDiscreteMode() {
+	if (this->mesh_processing_data_model_->actor_vec_.size() != 1) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查目前读入的网格数是否为1！"));
+		return;
+	}
+
+	this->mesh_processing_data_model_->display_mode_ = MeshProcessingDataModel::DISCRETE;
+	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_reader_->turnToDiscrete();
+
+	this->mesh_processing_data_model_->hueLut = vtkSmartPointer<vtkLookupTable>::New();
+	this->mesh_processing_data_model_->hueLut->SetNumberOfTableValues(this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+	this->mesh_processing_data_model_->hueLut->Build();
+
+	for (int i = 0; i < this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1; ++i) {
+		double hue = i * 1.0 / (this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+		double r, g, b;
+		vtkMath::HSVToRGB(hue, 1.0, 1.0, &r, &g, &b);
+		this->mesh_processing_data_model_->hueLut->SetTableValue(i, r, g, b, 1);
+	}
+
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(0, this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarModeToUseCellData();
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetColorModeToMapScalars();
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetLookupTable(this->mesh_processing_data_model_->hueLut);
+
+	if (this->mesh_processing_data_model_->highlight_vec_[0] == 1)
+		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	else
+		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnContinuousMode() {
+	if (this->mesh_processing_data_model_->actor_vec_.size() != 1) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查目前读入的网格数是否为1！"));
+		return;
+	}
+
+	this->mesh_processing_data_model_->display_mode_ = MeshProcessingDataModel::CONTINUOUS;
+	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_reader_->turnToContinuous();
+
+	this->mesh_processing_data_model_->hueLut = vtkSmartPointer<vtkLookupTable>::New();
+	this->mesh_processing_data_model_->hueLut->SetTableRange(this->color_table_reader_->minScalar(), this->color_table_reader_->maxScalar() + 1);
+	this->mesh_processing_data_model_->hueLut->SetHueRange(0, 1);
+	this->mesh_processing_data_model_->hueLut->SetSaturationRange(1, 1);
+	this->mesh_processing_data_model_->hueLut->SetValueRange(1, 1);
+	this->mesh_processing_data_model_->hueLut->Build();
+
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(this->color_table_reader_->minScalar(), this->color_table_reader_->maxScalar() + 1);
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarModeToUseCellData();
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetColorModeToMapScalars();
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetLookupTable(this->mesh_processing_data_model_->hueLut);
+
+	if (this->mesh_processing_data_model_->highlight_vec_[0] == 1)
+		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	else
+		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnListWidgetModelItemChanged(QListWidgetItem * item) {
+	int row_id = this->list_widget_model_->row(item);
+
+	if (item->checkState() == Qt::Unchecked) {
+		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[row_id]);
+		this->mesh_processing_data_model_->highlight_vec_[row_id] = 0;
+	} else {
+		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[row_id]);
+		this->mesh_processing_data_model_->highlight_vec_[row_id] = 1;
+	}
+
+	this->resetParameters();
+
+	this->vtk_widget_->update();
+}
+
 void MeshProcessing::OnSelectVertex(vtkIdType id) {
 	this->removeVertexActors();
 
@@ -257,12 +399,19 @@ void MeshProcessing::OnSelectFace(vtkIdType id) {
 void MeshProcessing::resetParameters() {
 	vtkSmartPointer<vtkAppendPolyData> appendFilter =
 		vtkSmartPointer<vtkAppendPolyData>::New();
+	int cnt = 0;
 	for (int i = 0; i < this->mesh_processing_data_model_->highlight_vec_.size(); ++i) {
-		if (this->mesh_processing_data_model_->highlight_vec_[i])
+		if (this->mesh_processing_data_model_->highlight_vec_[i]) {
 			appendFilter->AddInputData(this->mesh_processing_data_model_->mesh_vec_[i]);
+			++cnt;
+		}
 	}
-	appendFilter->Update();
-	this->mesh_processing_data_model_->combined_mesh_->DeepCopy(appendFilter->GetOutput());
+	if (cnt > 0) {
+		appendFilter->Update();
+		this->mesh_processing_data_model_->combined_mesh_ =
+			vtkSmartPointer<vtkPolyData>::New();
+		this->mesh_processing_data_model_->combined_mesh_->DeepCopy(appendFilter->GetOutput());
+	} else this->mesh_processing_data_model_->combined_mesh_ = nullptr;
 
 	int edge_count = 0;
 	this->mesh_processing_data_model_->mean_edge_length = 0.0;

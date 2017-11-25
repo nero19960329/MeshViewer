@@ -60,6 +60,9 @@
     <ClCompile Include="mesh_operation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="color_table_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mesh_processing.h">
@@ -89,6 +92,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh_operation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="color_table_reader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

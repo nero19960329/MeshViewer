@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <vtkActor.h>
+#include <vtkLookupTable.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 
@@ -19,6 +20,7 @@ private:
 
 public:
 	enum PickMode { OBSERVE, VERTEX, FACE };
+	enum DisplayMode { DEFAULT, DISCRETE, CONTINUOUS };
 
 	std::vector<vtkSmartPointer<vtkPolyData>> mesh_vec_;
 	std::vector<vtkSmartPointer<vtkPolyData>> mesh_edge_vec_;
@@ -39,5 +41,8 @@ public:
 	vtkIdType selected_face_id_;
 	vtkSmartPointer<vtkActor> selected_face_normal_actor_;
 
+	vtkSmartPointer<vtkLookupTable> hueLut;
+
 	PickMode pick_mode_;
+	DisplayMode display_mode_;
 };

@@ -14,6 +14,7 @@ vtkStandardNewMacro(MeshProcessingInteractorStyle);
 
 void MeshProcessingInteractorStyle::OnRightButtonDown() {
 	this->mesh_processing_data_model_ = MeshProcessingDataModel::getInstance();
+	if (this->mesh_processing_data_model_->combined_mesh_ == nullptr) return;
 
 	if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::VERTEX)
 		pickVertex();

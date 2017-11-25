@@ -94,6 +94,7 @@
      <string>文件</string>
     </property>
     <addaction name="open_file_action"/>
+    <addaction name="read_color_table_action"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -111,6 +112,10 @@
    <addaction name="face_mode_action"/>
    <addaction name="separator"/>
    <addaction name="display_normal_action"/>
+   <addaction name="separator"/>
+   <addaction name="default_mode_action"/>
+   <addaction name="discrete_mode_action"/>
+   <addaction name="continuous_mode_action"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="open_file_action">
@@ -190,6 +195,47 @@
    </property>
    <property name="toolTip">
     <string>显示选中面片的法向</string>
+   </property>
+  </action>
+  <action name="read_color_table_action">
+   <property name="text">
+    <string>读入颜色表</string>
+   </property>
+  </action>
+  <action name="default_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/default_mode.png</normaloff>Resources/default_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>default_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>默认显示模式</string>
+   </property>
+  </action>
+  <action name="discrete_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/discrete_mode.png</normaloff>Resources/discrete_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>discrete_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>离散颜色显示模式</string>
+   </property>
+  </action>
+  <action name="continuous_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/continuous_mode.png</normaloff>Resources/continuous_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>continuous_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>连续颜色显示模式</string>
    </property>
   </action>
  </widget>
