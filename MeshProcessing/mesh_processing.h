@@ -30,10 +30,13 @@ private:
 	QAction * observe_mode_action_;
 	QAction * vertex_mode_action_;
 	QAction * face_mode_action_;
+	QAction * multi_vertex_mode_action_;
 	QAction * display_normal_action_;
 	QAction * default_mode_action_;
 	QAction * discrete_mode_action_;
 	QAction * continuous_mode_action_;
+	QAction * fill_region_three_vertices_action_;
+	QAction * fill_region_two_vertices_action_;
 
 	QListWidget * list_widget_model_;
 
@@ -44,18 +47,24 @@ public slots:
 	void OnObserveMode();
 	void OnVertexMode();
 	void OnFaceMode();
+	void OnMultiVertexMode();
 	void OnDisplayNormal();
 	void OnDefaultMode();
 	void OnDiscreteMode();
 	void OnContinuousMode();
+	void OnFillRegionThreeVertices();
+	void OnFillRegionTwoVertices();
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
 
 	void OnSelectVertex(vtkIdType id);
 	void OnSelectFace(vtkIdType id);
+	void OnSelectMultiVertex(const std::vector<vtkIdType> & ids);
 
 private:
 	void resetParameters();
 	void removeMeshActors();
 	void removeVertexActors();
 	void removeFaceActors();
+	void removeMultiVertexActors();
+	void removeFillRegionFaceActors();
 };

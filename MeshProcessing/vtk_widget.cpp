@@ -26,7 +26,7 @@ VTKWidget::VTKWidget(QWidget * parent) : QVTKWidget(parent) {
 
 	this->style = vtkSmartPointer<MeshProcessingInteractorStyle>::New();
 	this->style->SetDefaultRenderer(this->renderer);
-	this->GetInteractor()->SetInteractorStyle(style);
+	this->GetInteractor()->SetInteractorStyle(this->style);
 
 	this->initTextActor();
 	this->update();
@@ -160,8 +160,10 @@ void VTKWidget::updateTopText() {
 		this->topTextActor->SetInput("Pick mode: Observe");
 	else if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::VERTEX)
 		this->topTextActor->SetInput("Pick mode: Vertex");
-	else
+	else if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::FACE)
 		this->topTextActor->SetInput("Pick mode: Face");
+	else if (this->mesh_processing_data_model_->pick_mode_ == MeshProcessingDataModel::MULTI_VERTEX)
+		this->topTextActor->SetInput("Pick mode : MultiVertex");
 	this->update();
 }
 

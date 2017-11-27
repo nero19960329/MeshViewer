@@ -6,10 +6,13 @@
 
 #include <vtkAppendPolyData.h>
 #include <vtkExtractEdges.h>
+#include <vtkIdTypeArray.h>
 #include <vtkMath.h>
 #include <vtkLineSource.h>
 #include <vtkLookupTable.h>
+#include <vtkNew.h>
 #include <vtkOBJReader.h>
+#include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
@@ -31,10 +34,13 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->observe_mode_action_ = ui.observe_mode_action;
 	this->vertex_mode_action_ = ui.vertex_mode_action;
 	this->face_mode_action_ = ui.face_mode_action;
+	this->multi_vertex_mode_action_ = ui.multi_vertex_mode_action;
 	this->display_normal_action_ = ui.display_normal_action;
 	this->default_mode_action_ = ui.default_mode_action;
 	this->discrete_mode_action_ = ui.discrete_mode_action;
 	this->continuous_mode_action_ = ui.continuous_mode_action;
+	this->fill_region_three_vertices_action_ = ui.fill_region_three_vertices_action;
+	this->fill_region_two_vertices_action_ = ui.fill_region_two_vertices_action;
 	this->list_widget_model_ = ui.list_widget_model;
 
 	this->wireframe_mode_action_->setChecked(true);
@@ -48,14 +54,18 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->observe_mode_action_, SIGNAL(triggered()), this, SLOT(OnObserveMode()));
 	connect(this->vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnVertexMode()));
 	connect(this->face_mode_action_, SIGNAL(triggered()), this, SLOT(OnFaceMode()));
+	connect(this->multi_vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnMultiVertexMode()));
 	connect(this->display_normal_action_, SIGNAL(triggered()), this, SLOT(OnDisplayNormal()));
 	connect(this->default_mode_action_, SIGNAL(triggered()), this, SLOT(OnDefaultMode()));
 	connect(this->discrete_mode_action_, SIGNAL(triggered()), this, SLOT(OnDiscreteMode()));
 	connect(this->continuous_mode_action_, SIGNAL(triggered()), this, SLOT(OnContinuousMode()));
+	connect(this->fill_region_three_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionThreeVertices()));
+	connect(this->fill_region_two_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionTwoVertices()));
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
 
 	connect(this->vtk_widget_->style, SIGNAL(selectVertex(vtkIdType)), this, SLOT(OnSelectVertex(vtkIdType)));
 	connect(this->vtk_widget_->style, SIGNAL(selectFace(vtkIdType)), this, SLOT(OnSelectFace(vtkIdType)));
+	connect(this->vtk_widget_->style, SIGNAL(selectMultiVertex(const std::vector<vtkIdType> &)), this, SLOT(OnSelectMultiVertex(const std::vector<vtkIdType> &)));
 }
 
 void MeshProcessing::OnOpenFile() {
@@ -210,19 +220,33 @@ void MeshProcessing::OnWireframeMode() {
 void MeshProcessing::OnObserveMode() {
 	this->removeVertexActors();
 	this->removeFaceActors();
+	this->removeMultiVertexActors();
+	this->removeFillRegionFaceActors();
 	this->mesh_processing_data_model_->pick_mode_ = MeshProcessingDataModel::OBSERVE;
 	this->vtk_widget_->updateTopText();
 }
 
 void MeshProcessing::OnVertexMode() {
 	this->removeFaceActors();
+	this->removeMultiVertexActors();
+	this->removeFillRegionFaceActors();
 	this->mesh_processing_data_model_->pick_mode_ = MeshProcessingDataModel::VERTEX;
 	this->vtk_widget_->updateTopText();
 }
 
 void MeshProcessing::OnFaceMode() {
 	this->removeVertexActors();
+	this->removeMultiVertexActors();
+	this->removeFillRegionFaceActors();
 	this->mesh_processing_data_model_->pick_mode_ = MeshProcessingDataModel::FACE;
+	this->vtk_widget_->updateTopText();
+}
+
+void MeshProcessing::OnMultiVertexMode() {
+	this->removeVertexActors();
+	this->removeFaceActors();
+	this->removeFillRegionFaceActors();
+	this->mesh_processing_data_model_->pick_mode_ = MeshProcessingDataModel::MULTI_VERTEX;
 	this->vtk_widget_->updateTopText();
 }
 
@@ -340,6 +364,48 @@ void MeshProcessing::OnContinuousMode() {
 	this->vtk_widget_->update();
 }
 
+void MeshProcessing::OnFillRegionThreeVertices() {
+	this->removeFillRegionFaceActors();
+
+	for (int i = 0; i < this->mesh_processing_data_model_->combined_mesh_->GetNumberOfCells(); ++i) {
+		vtkSmartPointer<vtkIdList> ptIds =
+			vtkSmartPointer<vtkIdList>::New();
+		this->mesh_processing_data_model_->combined_mesh_->GetCellPoints(i, ptIds);
+
+		int validNum = 0;
+		for (int k = 0; k < 3; ++k)
+			validNum += this->mesh_processing_data_model_->selected_multi_vertex_set_.find(ptIds->GetId(k)) != this->mesh_processing_data_model_->selected_multi_vertex_set_.end() ? 1 : 0;
+
+		if (validNum == 3) {
+			this->mesh_processing_data_model_->fill_region_face_actor_vec_.push_back(this->vtk_widget_->highlightFace(this->mesh_processing_data_model_->combined_mesh_, i));
+			this->mesh_processing_data_model_->fill_region_face_actor_vec_.back()->GetProperty()->SetColor(.8, .8, .2);
+		}
+	}
+
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnFillRegionTwoVertices() {
+	this->removeFillRegionFaceActors();
+
+	for (int i = 0; i < this->mesh_processing_data_model_->combined_mesh_->GetNumberOfCells(); ++i) {
+		vtkSmartPointer<vtkIdList> ptIds =
+			vtkSmartPointer<vtkIdList>::New();
+		this->mesh_processing_data_model_->combined_mesh_->GetCellPoints(i, ptIds);
+
+		int validNum = 0;
+		for (int k = 0; k < 3; ++k)
+			validNum += this->mesh_processing_data_model_->selected_multi_vertex_set_.find(ptIds->GetId(k)) != this->mesh_processing_data_model_->selected_multi_vertex_set_.end() ? 1 : 0;
+
+		if (validNum >= 2) {
+			this->mesh_processing_data_model_->fill_region_face_actor_vec_.push_back(this->vtk_widget_->highlightFace(this->mesh_processing_data_model_->combined_mesh_, i));
+			this->mesh_processing_data_model_->fill_region_face_actor_vec_.back()->GetProperty()->SetColor(.8, .8, .2);
+		}
+	}
+
+	this->vtk_widget_->update();
+}
+
 void MeshProcessing::OnListWidgetModelItemChanged(QListWidgetItem * item) {
 	int row_id = this->list_widget_model_->row(item);
 
@@ -396,6 +462,21 @@ void MeshProcessing::OnSelectFace(vtkIdType id) {
 	this->vtk_widget_->update();
 }
 
+void MeshProcessing::OnSelectMultiVertex(const std::vector<vtkIdType>& ids) {
+	this->removeMultiVertexActors();
+
+	this->mesh_processing_data_model_->selected_multi_vertex_set_.clear();
+	for (const auto & id : ids) {
+		this->mesh_processing_data_model_->selected_multi_vertex_actor_vec_.push_back(this->vtk_widget_->highlightVertex(this->mesh_processing_data_model_->combined_mesh_, id));
+		this->mesh_processing_data_model_->selected_multi_vertex_actor_vec_.back()->GetProperty()->SetInterpolationToGouraud();
+		this->mesh_processing_data_model_->selected_multi_vertex_actor_vec_.back()->GetProperty()->SetColor(.8, .2, .2);
+
+		this->mesh_processing_data_model_->selected_multi_vertex_set_.insert(id);
+	}
+
+	this->vtk_widget_->update();
+}
+
 void MeshProcessing::resetParameters() {
 	vtkSmartPointer<vtkAppendPolyData> appendFilter =
 		vtkSmartPointer<vtkAppendPolyData>::New();
@@ -411,6 +492,16 @@ void MeshProcessing::resetParameters() {
 		this->mesh_processing_data_model_->combined_mesh_ =
 			vtkSmartPointer<vtkPolyData>::New();
 		this->mesh_processing_data_model_->combined_mesh_->DeepCopy(appendFilter->GetOutput());
+
+		vtkSmartPointer<vtkIdTypeArray> numberScalarArray =
+			vtkSmartPointer<vtkIdTypeArray>::New();
+		numberScalarArray->SetNumberOfComponents(1);
+		numberScalarArray->SetName("number");
+		numberScalarArray->SetNumberOfValues(this->mesh_processing_data_model_->combined_mesh_->GetNumberOfPoints());
+		for (int i = 0; i < this->mesh_processing_data_model_->combined_mesh_->GetNumberOfPoints(); ++i)
+			numberScalarArray->SetValue(i, i);
+
+		this->mesh_processing_data_model_->combined_mesh_->GetPointData()->AddArray(numberScalarArray);
 	} else this->mesh_processing_data_model_->combined_mesh_ = nullptr;
 
 	int edge_count = 0;
@@ -445,4 +536,14 @@ void MeshProcessing::removeFaceActors() {
 	for (const auto & actor : this->mesh_processing_data_model_->neighbor_face2_actor_vec_)
 		this->vtk_widget_->removeActor(actor);
 	this->vtk_widget_->removeActor(this->mesh_processing_data_model_->selected_face_normal_actor_);
+}
+
+void MeshProcessing::removeMultiVertexActors() {
+	for (const auto & actor : this->mesh_processing_data_model_->selected_multi_vertex_actor_vec_)
+		this->vtk_widget_->removeActor(actor);
+}
+
+void MeshProcessing::removeFillRegionFaceActors() {
+	for (const auto & actor : this->mesh_processing_data_model_->fill_region_face_actor_vec_)
+		this->vtk_widget_->removeActor(actor);
 }

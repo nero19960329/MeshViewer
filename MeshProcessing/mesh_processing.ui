@@ -96,7 +96,15 @@
     <addaction name="open_file_action"/>
     <addaction name="read_color_table_action"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>区域填充</string>
+    </property>
+    <addaction name="fill_region_three_vertices_action"/>
+    <addaction name="fill_region_two_vertices_action"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="menu_2"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -110,6 +118,7 @@
    <addaction name="observe_mode_action"/>
    <addaction name="vertex_mode_action"/>
    <addaction name="face_mode_action"/>
+   <addaction name="multi_vertex_mode_action"/>
    <addaction name="separator"/>
    <addaction name="display_normal_action"/>
    <addaction name="separator"/>
@@ -146,7 +155,7 @@
   <action name="vertex_mode_action">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/point_mode.png</normaloff>Resources/point_mode.png</iconset>
+     <normaloff>Resources/vertex_mode.png</normaloff>Resources/vertex_mode.png</iconset>
    </property>
    <property name="text">
     <string>vertex_mode</string>
@@ -236,6 +245,28 @@
    </property>
    <property name="toolTip">
     <string>连续颜色显示模式</string>
+   </property>
+  </action>
+  <action name="multi_vertex_mode_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/multi_vertex_mode.png</normaloff>Resources/multi_vertex_mode.png</iconset>
+   </property>
+   <property name="text">
+    <string>multi_vertex_mode</string>
+   </property>
+   <property name="toolTip">
+    <string>切换至多顶点拾取模式</string>
+   </property>
+  </action>
+  <action name="fill_region_three_vertices_action">
+   <property name="text">
+    <string>模式一（三顶点）</string>
+   </property>
+  </action>
+  <action name="fill_region_two_vertices_action">
+   <property name="text">
+    <string>模式二（双顶点）</string>
    </property>
   </action>
  </widget>

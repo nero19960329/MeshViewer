@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <vector>
 
 #include <vtkActor.h>
@@ -19,7 +20,7 @@ private:
 	static MeshProcessingDataModel * instance_;
 
 public:
-	enum PickMode { OBSERVE, VERTEX, FACE };
+	enum PickMode { OBSERVE, VERTEX, FACE, MULTI_VERTEX };
 	enum DisplayMode { DEFAULT, DISCRETE, CONTINUOUS };
 
 	std::vector<vtkSmartPointer<vtkPolyData>> mesh_vec_;
@@ -40,6 +41,11 @@ public:
 
 	vtkIdType selected_face_id_;
 	vtkSmartPointer<vtkActor> selected_face_normal_actor_;
+
+	std::unordered_set<vtkIdType> selected_multi_vertex_set_;
+	std::vector<vtkSmartPointer<vtkActor>> selected_multi_vertex_actor_vec_;
+
+	std::vector<vtkSmartPointer<vtkActor>> fill_region_face_actor_vec_;
 
 	vtkSmartPointer<vtkLookupTable> hueLut;
 

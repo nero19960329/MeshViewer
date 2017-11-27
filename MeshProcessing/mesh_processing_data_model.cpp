@@ -6,6 +6,7 @@ MeshProcessingDataModel::MeshProcessingDataModel() {
 	this->combined_mesh_ = vtkSmartPointer<vtkPolyData>::New();
 	this->selected_face_normal_actor_ = nullptr;
 	this->selected_face_id_ = -1;
+	this->pick_mode_ = OBSERVE;
 	this->display_mode_ = DEFAULT;
 }
 
