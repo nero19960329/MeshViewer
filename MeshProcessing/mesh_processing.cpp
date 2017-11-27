@@ -59,6 +59,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->error_label_ = ui.error_label;
 	this->matrix_label_ = ui.matrix_label;
 	this->exit_icp_button_ = ui.exit_icp_button;
+	this->cancel_icp_button_ = ui.cancel_icp_button;
 
 	this->wireframe_mode_action_->setChecked(true);
 	this->default_mode_action_->setEnabled(false);
@@ -83,6 +84,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
 	connect(this->run_icp_button_, SIGNAL(clicked()), this, SLOT(OnRunICP()));
 	connect(this->exit_icp_button_, SIGNAL(clicked()), this, SLOT(OnExitICP()));
+	connect(this->cancel_icp_button_, SIGNAL(clicked()), this, SLOT(OnCancelICP()));
 
 	connect(this->vtk_widget_->style, SIGNAL(selectVertex(vtkIdType)), this, SLOT(OnSelectVertex(vtkIdType)));
 	connect(this->vtk_widget_->style, SIGNAL(selectFace(vtkIdType)), this, SLOT(OnSelectFace(vtkIdType)));
@@ -455,7 +457,10 @@ void MeshProcessing::OnRunICP() {
 	ICPAlgorithm icp;
 	icp.setSource(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->source_id]);
 	icp.setTarget(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->target_id]);
-	icp.moveCenterOn();
+	if (this->move_center_radio_button_->isChecked())
+		icp.moveCenterOn();
+	else
+		icp.moveCenterOff();
 	icp.setMaxIter(this->max_iter_spin_box_->value());
 	icp.setMinError(this->min_error_double_spin_box_->value());
 	icp.registration();
@@ -483,10 +488,10 @@ void MeshProcessing::OnRunICP() {
 	transformFilter->SetTransform(transform);
 	transformFilter->Update();
 
-	this->mesh_processing_data_model_->mesh_vec_[0]->DeepCopy(transformFilter->GetOutput());
+	//this->mesh_processing_data_model_->mesh_vec_[0]->DeepCopy(transformFilter->GetOutput());
 
 	vtkPolyDataMapper * mapper = vtkPolyDataMapper::SafeDownCast(this->mesh_processing_data_model_->actor_vec_[0]->GetMapper());
-	mapper->SetInputData(this->mesh_processing_data_model_->mesh_vec_[0]);
+	mapper->SetInputData(transformFilter->GetOutput());
 
 	this->vtk_widget_->resetCamera();
 	this->vtk_widget_->update();
@@ -502,6 +507,27 @@ void MeshProcessing::OnExitICP() {
 	this->matrix_label_->setText("");
 
 	this->enableAllActions();
+
+	this->mesh_processing_data_model_->mesh_vec_[0]->DeepCopy(this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->GetInput());
+	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->target_id]->GetProperty()->SetColor(.0, .5, 1.);
+	this->vtk_widget_->update();
+
+	this->resetParameters();
+}
+
+void MeshProcessing::OnCancelICP() {
+	this->tab_widget_->setTabEnabled(0, true);
+	this->tab_widget_->setTabEnabled(1, false);
+	this->tab_widget_->setCurrentIndex(0);
+
+	this->iter_num_label_->setText("");
+	this->error_label_->setText("");
+	this->matrix_label_->setText("");
+
+	this->enableAllActions();
+
+	vtkPolyDataMapper * mapper = vtkPolyDataMapper::SafeDownCast(this->mesh_processing_data_model_->actor_vec_[0]->GetMapper());
+	mapper->SetInputData(this->mesh_processing_data_model_->mesh_vec_[0]);
 
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->target_id]->GetProperty()->SetColor(.0, .5, 1.);
 	this->vtk_widget_->update();

@@ -56,6 +56,7 @@ private:
 	QLabel * error_label_;
 	QLabel * matrix_label_;
 	QPushButton * exit_icp_button_;
+	QPushButton * cancel_icp_button_;
 
 public slots:
 	void OnOpenFile();
@@ -75,6 +76,7 @@ public slots:
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
 	void OnRunICP();
 	void OnExitICP();
+	void OnCancelICP();
 
 	void OnSelectVertex(vtkIdType id);
 	void OnSelectFace(vtkIdType id);

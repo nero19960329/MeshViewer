@@ -30,7 +30,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab_model">
      <attribute name="title">
@@ -277,12 +277,25 @@
          <rect>
           <x>10</x>
           <y>410</y>
-          <width>191</width>
+          <width>91</width>
           <height>23</height>
          </rect>
         </property>
         <property name="text">
-         <string>退出</string>
+         <string>确认</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="cancel_icp_button">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>410</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>取消</string>
         </property>
        </widget>
       </widget>
