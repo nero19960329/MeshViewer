@@ -1,9 +1,15 @@
 #pragma once
 
 #include <QtWidgets/QAction>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QWidget>
 
 #include "color_table_reader.h"
 #include "mesh_processing_data_model.h"
@@ -41,6 +47,16 @@ private:
 
 	QListWidget * list_widget_model_;
 
+	QTabWidget * tab_widget_;
+	QSpinBox * max_iter_spin_box_;
+	QDoubleSpinBox * min_error_double_spin_box_;
+	QRadioButton * move_center_radio_button_;
+	QPushButton * run_icp_button_;
+	QLabel * iter_num_label_;
+	QLabel * error_label_;
+	QLabel * matrix_label_;
+	QPushButton * exit_icp_button_;
+
 public slots:
 	void OnOpenFile();
 	void OnReadColorTable();
@@ -57,6 +73,8 @@ public slots:
 	void OnFillRegionThreeVertices();
 	void OnFillRegionTwoVertices();
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
+	void OnRunICP();
+	void OnExitICP();
 
 	void OnSelectVertex(vtkIdType id);
 	void OnSelectFace(vtkIdType id);
@@ -69,4 +87,6 @@ private:
 	void removeFaceActors();
 	void removeMultiVertexActors();
 	void removeFillRegionFaceActors();
+	void enableAllActions();
+	void disableAllActions();
 };

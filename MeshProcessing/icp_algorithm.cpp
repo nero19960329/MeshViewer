@@ -13,6 +13,7 @@ ICPAlgorithm::ICPAlgorithm() {
 	this->target = nullptr;
 	this->is_move_center = false;
 	this->max_iter = 0;
+	this->min_error = 0.0;
 	this->transform = vtkSmartPointer<vtkTransform>::New();
 	this->locator = vtkSmartPointer<vtkCellLocator>::New();
 }
@@ -39,6 +40,10 @@ void ICPAlgorithm::setMaxIter(int max_iter_) {
 	this->max_iter = max_iter_;
 }
 
+void ICPAlgorithm::setMinError(double min_error_) {
+	this->min_error = min_error_;
+}
+
 void ICPAlgorithm::registration() {
 	this->transform->Identity();
 	this->transform->PostMultiply();
@@ -61,8 +66,10 @@ void ICPAlgorithm::registration() {
 	this->locator->SetNumberOfCellsPerBucket(1);
 	this->locator->BuildLocator();
 
-	for (int i = 0; i < this->max_iter; ++i) {
+	for (iter_num = 0; iter_num < this->max_iter; ++iter_num) {
 		step_registration();
+		if (this->error < this->min_error)
+			break;
 	}
 
 	if (this->is_move_center) {
@@ -75,12 +82,19 @@ vtkMatrix4x4 * ICPAlgorithm::getTransformMatrix() {
 	return this->transform->GetMatrix();
 }
 
+int ICPAlgorithm::getIterNum() {
+	return this->iter_num;
+}
+
+double ICPAlgorithm::getError() {
+	return this->error;
+}
+
 void ICPAlgorithm::move_center() {
 	vtkSmartPointer<vtkTransform> center_transform =
 		vtkSmartPointer<vtkTransform>::New();
 	center_transform->Translate(-source_center[0], -source_center[1], -source_center[2]);
 	center_transform->Update();
-	center_transform->GetMatrix()->Print(std::cout);
 	vtkNew<vtkTransformPolyDataFilter> transformFilter;
 	transformFilter->SetInputData(this->source);
 	transformFilter->SetTransform(center_transform);
@@ -90,7 +104,6 @@ void ICPAlgorithm::move_center() {
 	center_transform->Identity();
 	center_transform->Translate(-target_center[0], -target_center[1], -target_center[2]);
 	center_transform->Update();
-	center_transform->GetMatrix()->Print(std::cout);
 	transformFilter->SetInputData(this->target);
 	transformFilter->SetTransform(center_transform);
 	transformFilter->Update();
@@ -151,15 +164,14 @@ void ICPAlgorithm::step_registration() {
 	this->source->DeepCopy(transformFilter->GetOutput());
 
 	sourcePoints = this->source->GetPoints();
-	double error = 0.0;
+	this->error = 0.0;
 	for (int i = 0; i < n; ++i) {
 		double p[3], q[3];
 		sourcePoints->GetPoint(i, p);
 		targetPoints->GetPoint(i, q);
-		error += vtkMath::Distance2BetweenPoints(p, q);
+		this->error += vtkMath::Distance2BetweenPoints(p, q);
 	}
-	error = std::sqrt(error / n);
-	std::cout << "error = " << error << std::endl;
+	this->error = std::sqrt(this->error / n);
 
 	R_mat->Delete();
 }

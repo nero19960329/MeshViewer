@@ -47,6 +47,8 @@ public:
 
 	std::vector<vtkSmartPointer<vtkActor>> fill_region_face_actor_vec_;
 
+	int source_id, target_id;
+
 	vtkSmartPointer<vtkLookupTable> hueLut;
 
 	PickMode pick_mode_;

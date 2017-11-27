@@ -74,13 +74,19 @@ void MeshProcessingInteractorStyle::pickVertex() {
 void MeshProcessingInteractorStyle::pickFace() {
 	int * clickPos = this->GetInteractor()->GetEventPosition();
 
-	vtkSmartPointer<vtkCellPicker> picker =
-		vtkSmartPointer<vtkCellPicker>::New();
-	picker->SetTolerance(0.0005);
+	vtkSmartPointer<vtkPropPicker> picker =
+		vtkSmartPointer<vtkPropPicker>::New();
 	picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
-	if (picker->GetCellId() == -1) return;
 
-	vtkIdType face_id = picker->GetCellId();
+	double * pos = picker->GetPickPosition();
+	if (pos[0] == 0 && pos[1] == 0 && pos[2] == 0) return;
+
+	vtkSmartPointer<vtkCellLocator> cellLocator =
+		vtkSmartPointer<vtkCellLocator>::New();
+	cellLocator->SetDataSet(this->mesh_processing_data_model_->combined_mesh_);
+	cellLocator->BuildLocator();
+
+	vtkIdType face_id = cellLocator->FindCell(pos);
 	emit(selectFace(face_id));
 }
 

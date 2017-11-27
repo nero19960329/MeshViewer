@@ -9,6 +9,7 @@
 
 #include <QVTKWidget.h>
 
+#include "icp_algorithm.h"
 #include "mesh_processing_data_model.h"
 #include "mesh_processing_interactor_style.h"
 
