@@ -83,6 +83,7 @@
     <ClCompile Include="GeneratedFiles\Release\moc_mesh_processing_interactor_style.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="icp_algorithm.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh_operation.cpp" />
     <ClCompile Include="mesh_processing.cpp" />
@@ -118,6 +119,7 @@
   <ItemGroup>
     <ClInclude Include="color_table_reader.h" />
     <ClInclude Include="GeneratedFiles\ui_mesh_processing.h" />
+    <ClInclude Include="icp_algorithm.h" />
     <ClInclude Include="mesh_operation.h" />
     <ClInclude Include="mesh_processing_data_model.h" />
     <CustomBuild Include="mesh_processing_interactor_style.h">

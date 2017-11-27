@@ -10,6 +10,7 @@
 #include <vtkMath.h>
 #include <vtkLineSource.h>
 #include <vtkLookupTable.h>
+#include <vtkMatrix4x4.h>
 #include <vtkNew.h>
 #include <vtkOBJReader.h>
 #include <vtkPointData.h>
@@ -18,7 +19,10 @@
 #include <vtkProperty.h>
 #include <vtkScalarBarActor.h>
 #include <vtkSphereSource.h>
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
 
+#include "icp_algorithm.h"
 #include "mesh_operation.h"
 #include "vtkOFFReader.h"
 
@@ -39,6 +43,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->default_mode_action_ = ui.default_mode_action;
 	this->discrete_mode_action_ = ui.discrete_mode_action;
 	this->continuous_mode_action_ = ui.continuous_mode_action;
+	this->icp_registration_action_ = ui.icp_registraion_action;
 	this->fill_region_three_vertices_action_ = ui.fill_region_three_vertices_action;
 	this->fill_region_two_vertices_action_ = ui.fill_region_two_vertices_action;
 	this->list_widget_model_ = ui.list_widget_model;
@@ -59,6 +64,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->default_mode_action_, SIGNAL(triggered()), this, SLOT(OnDefaultMode()));
 	connect(this->discrete_mode_action_, SIGNAL(triggered()), this, SLOT(OnDiscreteMode()));
 	connect(this->continuous_mode_action_, SIGNAL(triggered()), this, SLOT(OnContinuousMode()));
+	connect(this->icp_registration_action_, SIGNAL(triggered()), this, SLOT(OnICPRegistration()));
 	connect(this->fill_region_three_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionThreeVertices()));
 	connect(this->fill_region_two_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionTwoVertices()));
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
@@ -361,6 +367,32 @@ void MeshProcessing::OnContinuousMode() {
 		this->vtk_widget_->highlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
 	else
 		this->vtk_widget_->unhighlightMesh(this->mesh_processing_data_model_->actor_vec_[0]);
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnICPRegistration() {
+	ICPAlgorithm icp;
+	icp.setSource(this->mesh_processing_data_model_->mesh_vec_[0]);
+	icp.setTarget(this->mesh_processing_data_model_->mesh_vec_[1]);
+	icp.moveCenterOn();
+	icp.setMaxIter(100);
+	icp.registration();
+
+	vtkMatrix4x4 * transform_matrix = icp.getTransformMatrix();
+
+	vtkSmartPointer<vtkTransform> transform =
+		vtkSmartPointer<vtkTransform>::New();
+	transform->SetMatrix(transform_matrix);
+	transform->Update();
+
+	vtkNew<vtkTransformPolyDataFilter> transformFilter;
+	transformFilter->SetInputData(this->mesh_processing_data_model_->mesh_vec_[0]);
+	transformFilter->SetTransform(transform);
+	transformFilter->Update();
+
+	vtkPolyDataMapper * mapper = vtkPolyDataMapper::SafeDownCast(this->mesh_processing_data_model_->actor_vec_[0]->GetMapper());
+	mapper->SetInputData(transformFilter->GetOutput());
+
 	this->vtk_widget_->update();
 }
 

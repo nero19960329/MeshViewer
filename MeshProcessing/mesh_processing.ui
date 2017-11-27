@@ -125,6 +125,8 @@
    <addaction name="default_mode_action"/>
    <addaction name="discrete_mode_action"/>
    <addaction name="continuous_mode_action"/>
+   <addaction name="separator"/>
+   <addaction name="icp_registraion_action"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="open_file_action">
@@ -267,6 +269,18 @@
   <action name="fill_region_two_vertices_action">
    <property name="text">
     <string>模式二（双顶点）</string>
+   </property>
+  </action>
+  <action name="icp_registraion_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icp.png</normaloff>Resources/icp.png</iconset>
+   </property>
+   <property name="text">
+    <string>icp_registration</string>
+   </property>
+   <property name="toolTip">
+    <string>ICP配准</string>
    </property>
   </action>
  </widget>

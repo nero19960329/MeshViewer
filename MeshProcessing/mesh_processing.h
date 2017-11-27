@@ -35,6 +35,7 @@ private:
 	QAction * default_mode_action_;
 	QAction * discrete_mode_action_;
 	QAction * continuous_mode_action_;
+	QAction * icp_registration_action_;
 	QAction * fill_region_three_vertices_action_;
 	QAction * fill_region_two_vertices_action_;
 
@@ -52,6 +53,7 @@ public slots:
 	void OnDefaultMode();
 	void OnDiscreteMode();
 	void OnContinuousMode();
+	void OnICPRegistration();
 	void OnFillRegionThreeVertices();
 	void OnFillRegionTwoVertices();
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
