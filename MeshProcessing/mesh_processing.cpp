@@ -92,7 +92,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MeshProcessing::OnOpenFile() {
-	QStringList file_paths = QFileDialog::getOpenFileNames(this, QString::fromLocal8Bit("打开文件"), "../", tr("OBJ files(*.obj);; OFF files(*.off)"));
+	QStringList file_paths = QFileDialog::getOpenFileNames(this, QString::fromLocal8Bit("打开文件"), "./objs/", tr("OBJ files(*.obj);; OFF files(*.off)"));
 	if (file_paths.size() == 0) return;
 
 	this->default_mode_action_->setEnabled(false);
@@ -193,7 +193,7 @@ void MeshProcessing::OnReadColorTable() {
 		return;
 	}
 
-	QString file_path = QFileDialog::getOpenFileName(this, QString::fromLocal8Bit("打开文件"), "../", tr("txt Files(*.txt)"));
+	QString file_path = QFileDialog::getOpenFileName(this, QString::fromLocal8Bit("打开文件"), "./", tr("txt Files(*.txt)"));
 	if (file_path.size() == 0) return;
 
 	this->color_table_reader_->setColorTableName(file_path);
