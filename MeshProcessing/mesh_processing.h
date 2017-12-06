@@ -7,6 +7,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QScrollArea.h>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QWidget>
@@ -42,10 +43,14 @@ private:
 	QAction * discrete_mode_action_;
 	QAction * continuous_mode_action_;
 	QAction * icp_registration_action_;
+	QAction * segment_action_;
 	QAction * fill_region_three_vertices_action_;
 	QAction * fill_region_two_vertices_action_;
 
 	QListWidget * list_widget_model_;
+
+	QScrollArea * register_scroll_area_;
+	QScrollArea * segment_scroll_area_;
 
 	QTabWidget * tab_widget_;
 	QSpinBox * max_iter_spin_box_;
@@ -57,6 +62,10 @@ private:
 	QLabel * matrix_label_;
 	QPushButton * exit_icp_button_;
 	QPushButton * cancel_icp_button_;
+
+	QPushButton * run_segment_button_;
+	QPushButton * exit_segment_button_;
+	QPushButton * cancel_segment_button_;
 
 public slots:
 	void OnOpenFile();
@@ -71,12 +80,16 @@ public slots:
 	void OnDiscreteMode();
 	void OnContinuousMode();
 	void OnICPRegistration();
+	void OnSegment();
 	void OnFillRegionThreeVertices();
 	void OnFillRegionTwoVertices();
 	void OnListWidgetModelItemChanged(QListWidgetItem *);
 	void OnRunICP();
 	void OnExitICP();
 	void OnCancelICP();
+	void OnRunSegment();
+	void OnExitSegment();
+	void OnCancelSegment();
 
 	void OnSelectVertex(vtkIdType id);
 	void OnSelectFace(vtkIdType id);

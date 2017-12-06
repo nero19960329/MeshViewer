@@ -54,7 +54,7 @@
      <attribute name="title">
       <string>流程</string>
      </attribute>
-     <widget class="QScrollArea" name="scrollArea">
+     <widget class="QScrollArea" name="register_scroll_area">
       <property name="geometry">
        <rect>
         <x>0</x>
@@ -300,6 +300,84 @@
        </widget>
       </widget>
      </widget>
+     <widget class="QScrollArea" name="segment_scroll_area">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>211</width>
+        <height>681</height>
+       </rect>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>209</width>
+         <height>679</height>
+        </rect>
+       </property>
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>191</width>
+          <height>361</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>参数设置</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="run_segment_button">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>380</y>
+          <width>191</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>进行分割</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="exit_segment_button">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>410</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>确认</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="cancel_segment_button">
+        <property name="geometry">
+         <rect>
+          <x>110</x>
+          <y>410</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>取消</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <zorder>register_scroll_area</zorder>
+     <zorder>groupBox_3</zorder>
+     <zorder>segment_scroll_area</zorder>
     </widget>
    </widget>
    <widget class="QLabel" name="property_label">
@@ -373,6 +451,7 @@
    <addaction name="continuous_mode_action"/>
    <addaction name="separator"/>
    <addaction name="icp_registraion_action"/>
+   <addaction name="segment_action"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="open_file_action">
@@ -527,6 +606,15 @@
    </property>
    <property name="toolTip">
     <string>ICP配准</string>
+   </property>
+  </action>
+  <action name="segment_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/segment.png</normaloff>Resources/segment.png</iconset>
+   </property>
+   <property name="text">
+    <string>segment</string>
    </property>
   </action>
  </widget>

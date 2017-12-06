@@ -19,6 +19,7 @@
 #include <vtkProperty.h>
 #include <vtkScalarBarActor.h>
 #include <vtkSphereSource.h>
+#include <vtkSTLReader.h>
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 
@@ -27,6 +28,7 @@
 
 #include "icp_algorithm.h"
 #include "mesh_operation.h"
+#include "mesh_segmenter.h"
 #include "vtkOFFReader.h"
 
 MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
@@ -47,9 +49,12 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->discrete_mode_action_ = ui.discrete_mode_action;
 	this->continuous_mode_action_ = ui.continuous_mode_action;
 	this->icp_registration_action_ = ui.icp_registraion_action;
+	this->segment_action_ = ui.segment_action;
 	this->fill_region_three_vertices_action_ = ui.fill_region_three_vertices_action;
 	this->fill_region_two_vertices_action_ = ui.fill_region_two_vertices_action;
 	this->list_widget_model_ = ui.list_widget_model;
+	this->register_scroll_area_ = ui.register_scroll_area;
+	this->segment_scroll_area_ = ui.segment_scroll_area;
 	this->tab_widget_ = ui.tab_widget;
 	this->max_iter_spin_box_ = ui.max_iter_spin_box;
 	this->min_error_double_spin_box_ = ui.min_error_double_spin_box;
@@ -60,11 +65,16 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->matrix_label_ = ui.matrix_label;
 	this->exit_icp_button_ = ui.exit_icp_button;
 	this->cancel_icp_button_ = ui.cancel_icp_button;
+	this->run_segment_button_ = ui.run_segment_button;
+	this->exit_segment_button_ = ui.exit_segment_button;
+	this->cancel_segment_button_ = ui.cancel_segment_button;
 
 	this->wireframe_mode_action_->setChecked(true);
 	this->default_mode_action_->setEnabled(false);
 	this->discrete_mode_action_->setEnabled(false);
 	this->continuous_mode_action_->setEnabled(false);
+	this->register_scroll_area_->setVisible(false);
+	this->segment_scroll_area_->setVisible(false);
 	this->tab_widget_->setTabEnabled(1, false);
 
 	connect(this->open_file_action_, SIGNAL(triggered()), this, SLOT(OnOpenFile()));
@@ -79,12 +89,16 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->discrete_mode_action_, SIGNAL(triggered()), this, SLOT(OnDiscreteMode()));
 	connect(this->continuous_mode_action_, SIGNAL(triggered()), this, SLOT(OnContinuousMode()));
 	connect(this->icp_registration_action_, SIGNAL(triggered()), this, SLOT(OnICPRegistration()));
+	connect(this->segment_action_, SIGNAL(triggered()), this, SLOT(OnSegment()));
 	connect(this->fill_region_three_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionThreeVertices()));
 	connect(this->fill_region_two_vertices_action_, SIGNAL(triggered()), this, SLOT(OnFillRegionTwoVertices()));
 	connect(this->list_widget_model_, SIGNAL(itemChanged(QListWidgetItem *)), this, SLOT(OnListWidgetModelItemChanged(QListWidgetItem *)));
 	connect(this->run_icp_button_, SIGNAL(clicked()), this, SLOT(OnRunICP()));
 	connect(this->exit_icp_button_, SIGNAL(clicked()), this, SLOT(OnExitICP()));
 	connect(this->cancel_icp_button_, SIGNAL(clicked()), this, SLOT(OnCancelICP()));
+	connect(this->run_segment_button_, SIGNAL(clicked()), this, SLOT(OnRunSegment()));
+	connect(this->exit_segment_button_, SIGNAL(clicked()), this, SLOT(OnExitSegment()));
+	connect(this->cancel_segment_button_, SIGNAL(clicked()), this, SLOT(OnCancelSegment()));
 
 	connect(this->vtk_widget_->style, SIGNAL(selectVertex(vtkIdType)), this, SLOT(OnSelectVertex(vtkIdType)));
 	connect(this->vtk_widget_->style, SIGNAL(selectFace(vtkIdType)), this, SLOT(OnSelectFace(vtkIdType)));
@@ -92,7 +106,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MeshProcessing::OnOpenFile() {
-	QStringList file_paths = QFileDialog::getOpenFileNames(this, QString::fromLocal8Bit("打开文件"), "./objs/", tr("OBJ files(*.obj);; OFF files(*.off)"));
+	QStringList file_paths = QFileDialog::getOpenFileNames(this, QString::fromLocal8Bit("打开文件"), "./objs/", tr("OBJ files(*.obj);; OFF files(*.off);; STL files(*.stl)"));
 	if (file_paths.size() == 0) return;
 
 	this->default_mode_action_->setEnabled(false);
@@ -121,17 +135,20 @@ void MeshProcessing::OnOpenFile() {
 		vtkSmartPointer<vtkPolyData> mesh =
 			vtkSmartPointer<vtkPolyData>::New();
 		if (extension_name == QString::fromLocal8Bit("obj")) {
-			vtkSmartPointer<vtkOBJReader> objReader =
-				vtkSmartPointer<vtkOBJReader>::New();
+			vtkNew<vtkOBJReader> objReader;
 			objReader->SetFileName(file_name.toLocal8Bit());
 			objReader->Update();
 			mesh->DeepCopy(objReader->GetOutput());
-		} else {
-			vtkSmartPointer<vtkOFFReader> offReader =
-				vtkSmartPointer<vtkOFFReader>::New();
+		} else if (extension_name == QString::fromLocal8Bit("off")) {
+			vtkNew<vtkOFFReader> offReader;
 			offReader->SetFileName(file_name.toLocal8Bit());
 			offReader->Update();
 			mesh->DeepCopy(offReader->GetOutput());
+		} else {
+			vtkNew<vtkSTLReader> stlReader;
+			stlReader->SetFileName(file_name.toLocal8Bit());
+			stlReader->Update();
+			mesh->DeepCopy(stlReader->GetOutput());
 		}
 
 		QString only_name = file_name.split('/').back().split('.').front();
@@ -155,8 +172,7 @@ void MeshProcessing::OnOpenFile() {
 		number_of_points += mesh->GetNumberOfPoints();
 		number_of_faces += mesh->GetNumberOfCells();
 
-		vtkSmartPointer<vtkExtractEdges> extractEdges =
-			vtkSmartPointer<vtkExtractEdges>::New();
+		vtkNew<vtkExtractEdges> extractEdges;
 		extractEdges->SetInputData(mesh);
 		extractEdges->Update();
 
@@ -383,12 +399,38 @@ void MeshProcessing::OnICPRegistration() {
 	OnWireframeMode();
 	this->disableAllActions();
 	this->OnObserveMode();
+	this->register_scroll_area_->setVisible(true);
 
 	this->mesh_processing_data_model_->source_id = active_ids.front();
 	this->mesh_processing_data_model_->target_id = active_ids.back();
 
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->target_id]->GetProperty()->SetColor(.8, .2, .2);
 	this->vtk_widget_->update();
+
+	this->tab_widget_->setTabEnabled(0, false);
+	this->tab_widget_->setTabEnabled(1, true);
+	this->tab_widget_->setCurrentIndex(1);
+}
+
+void MeshProcessing::OnSegment() {
+	std::vector<int> active_ids;
+	for (int i = 0; i < this->mesh_processing_data_model_->highlight_vec_.size(); ++i) {
+		if (this->mesh_processing_data_model_->highlight_vec_[i])
+			active_ids.push_back(i);
+	}
+
+	if (active_ids.size() != 1) {
+		QMessageBox::warning(this, QString::fromLocal8Bit("警告"), QString::fromLocal8Bit("请检查目前选中的网格数是否为1！"));
+		return;
+	}
+
+	this->wireframe_mode_action_->setChecked(false);
+	OnWireframeMode();
+	this->disableAllActions();
+	this->OnObserveMode();
+	this->segment_scroll_area_->setVisible(true);
+
+	this->mesh_processing_data_model_->segment_id = active_ids.front();
 
 	this->tab_widget_->setTabEnabled(0, false);
 	this->tab_widget_->setTabEnabled(1, true);
@@ -488,8 +530,6 @@ void MeshProcessing::OnRunICP() {
 	transformFilter->SetTransform(transform);
 	transformFilter->Update();
 
-	//this->mesh_processing_data_model_->mesh_vec_[0]->DeepCopy(transformFilter->GetOutput());
-
 	vtkPolyDataMapper * mapper = vtkPolyDataMapper::SafeDownCast(this->mesh_processing_data_model_->actor_vec_[0]->GetMapper());
 	mapper->SetInputData(transformFilter->GetOutput());
 
@@ -512,6 +552,7 @@ void MeshProcessing::OnExitICP() {
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->target_id]->GetProperty()->SetColor(.0, .5, 1.);
 	this->vtk_widget_->update();
 
+	this->register_scroll_area_->setVisible(false);
 	this->resetParameters();
 }
 
@@ -532,6 +573,48 @@ void MeshProcessing::OnCancelICP() {
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->target_id]->GetProperty()->SetColor(.0, .5, 1.);
 	this->vtk_widget_->update();
 
+	this->register_scroll_area_->setVisible(false);
+	this->resetParameters();
+}
+
+void MeshProcessing::OnRunSegment() {
+	MeshSegmenter segmenter;
+	segmenter.setMesh(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]);
+	vtkSmartPointer<vtkPolyData> result = segmenter.segment();
+
+	this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]->DeepCopy(result);
+	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetProperty()->SetColor(0.0, 0.0, 0.0);
+	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetMapper()->ScalarVisibilityOn();
+	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnExitSegment() {
+	this->tab_widget_->setTabEnabled(0, true);
+	this->tab_widget_->setTabEnabled(1, false);
+	this->tab_widget_->setCurrentIndex(0);
+
+	this->iter_num_label_->setText("");
+	this->error_label_->setText("");
+	this->matrix_label_->setText("");
+
+	this->enableAllActions();
+
+	this->segment_scroll_area_->setVisible(false);
+	this->resetParameters();
+}
+
+void MeshProcessing::OnCancelSegment() {
+	this->tab_widget_->setTabEnabled(0, true);
+	this->tab_widget_->setTabEnabled(1, false);
+	this->tab_widget_->setCurrentIndex(0);
+
+	this->iter_num_label_->setText("");
+	this->error_label_->setText("");
+	this->matrix_label_->setText("");
+
+	this->enableAllActions();
+
+	this->segment_scroll_area_->setVisible(false);
 	this->resetParameters();
 }
 
