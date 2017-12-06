@@ -5,6 +5,7 @@
 #include <QtWidgets/QMessageBox>
 
 #include <vtkAppendPolyData.h>
+#include <vtkCellData.h>
 #include <vtkExtractEdges.h>
 #include <vtkIdTypeArray.h>
 #include <vtkMath.h>
@@ -65,6 +66,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->matrix_label_ = ui.matrix_label;
 	this->exit_icp_button_ = ui.exit_icp_button;
 	this->cancel_icp_button_ = ui.cancel_icp_button;
+	this->cluster_num_slider_ = ui.cluster_num_slider;
 	this->run_segment_button_ = ui.run_segment_button;
 	this->exit_segment_button_ = ui.exit_segment_button;
 	this->cancel_segment_button_ = ui.cancel_segment_button;
@@ -96,6 +98,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	connect(this->run_icp_button_, SIGNAL(clicked()), this, SLOT(OnRunICP()));
 	connect(this->exit_icp_button_, SIGNAL(clicked()), this, SLOT(OnExitICP()));
 	connect(this->cancel_icp_button_, SIGNAL(clicked()), this, SLOT(OnCancelICP()));
+	connect(this->cluster_num_slider_, SIGNAL(valueChanged(int)), this, SLOT(OnClusterNumChanged(int)));
 	connect(this->run_segment_button_, SIGNAL(clicked()), this, SLOT(OnRunSegment()));
 	connect(this->exit_segment_button_, SIGNAL(clicked()), this, SLOT(OnExitSegment()));
 	connect(this->cancel_segment_button_, SIGNAL(clicked()), this, SLOT(OnCancelSegment()));
@@ -577,15 +580,22 @@ void MeshProcessing::OnCancelICP() {
 	this->resetParameters();
 }
 
-void MeshProcessing::OnRunSegment() {
-	MeshSegmenter segmenter;
-	segmenter.setMesh(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]);
-	vtkSmartPointer<vtkPolyData> result = segmenter.segment();
+void MeshProcessing::OnClusterNumChanged(int n) {
+	vtkSmartPointer<vtkDoubleArray> scalars = this->mesh_processing_data_model_->mesh_segmenter_->getSegmentScalar(n);
 
-	this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]->DeepCopy(result);
+	this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]->GetCellData()->SetScalars(scalars);
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetProperty()->SetColor(0.0, 0.0, 0.0);
 	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetMapper()->ScalarVisibilityOn();
 	this->vtk_widget_->update();
+}
+
+void MeshProcessing::OnRunSegment() {
+	this->mesh_processing_data_model_->mesh_segmenter_ = new MeshSegmenter;
+	this->mesh_processing_data_model_->mesh_segmenter_->setMesh(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]);
+	this->mesh_processing_data_model_->mesh_segmenter_->segment();
+
+	this->cluster_num_slider_->setMinimum(2);
+	this->cluster_num_slider_->setMaximum(64);
 }
 
 void MeshProcessing::OnExitSegment() {

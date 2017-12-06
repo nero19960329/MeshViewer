@@ -15,21 +15,18 @@
 #include <array>
 #include <set>
 #include <tuple>
+#include <unordered_map>
 
 MeshSegmenter::MeshSegmenter() {
 	using std::vector;
 
 	this->phy_ratio = 0.03;
-	this->seed_num = 8;
+	this->seed_num = 64;
 	this->cluster_face_ids = vector<vector<int>>(this->seed_num);
 }
 
-vtkSmartPointer<vtkPolyData> MeshSegmenter::segment() {
+void MeshSegmenter::segment() {
 	using std::vector;
-
-	vtkSmartPointer<vtkPolyData> result =
-		vtkSmartPointer<vtkPolyData>::New();
-	result->DeepCopy(this->mesh);
 
 	this->dual_graph = this->calcDualGraph(this->phy_ratio);
 	this->centers = vtkDoubleArray::SafeDownCast(dual_graph->GetVertexData()->GetArray("Centers"));
@@ -69,19 +66,18 @@ vtkSmartPointer<vtkPolyData> MeshSegmenter::segment() {
 	}
 
 	this->mergeClusters();
+}
 
-	int n = 2;
+vtkSmartPointer<vtkDoubleArray> MeshSegmenter::getSegmentScalar(int n) {
 	vtkSmartPointer<vtkDoubleArray> scalars =
 		vtkSmartPointer<vtkDoubleArray>::New();
 	scalars->SetNumberOfValues(this->mesh->GetNumberOfCells());
 	for (int i = 0; i < this->mesh->GetNumberOfCells(); ++i) {
 		int cluster_id = this->cluster_steps[this->seed_num - n][this->face_id_to_cluster[i]];
 		scalars->SetValue(i, cluster_id * 1.0 / n);
-		
 	}
-	result->GetCellData()->SetScalars(scalars);
 
-	return result;
+	return scalars;
 }
 
 vtkSmartPointer<vtkMutableUndirectedGraph> MeshSegmenter::calcDualGraph(double phy_ratio) {
@@ -97,13 +93,11 @@ vtkSmartPointer<vtkMutableUndirectedGraph> MeshSegmenter::calcDualGraph(double p
 		vtkSmartPointer<vtkDoubleArray>::New();
 	centers->SetName("Centers");
 	centers->SetNumberOfComponents(3);
-	centers->SetNumberOfTuples(cell_num);
 
 	vtkSmartPointer<vtkDoubleArray> areas =
 		vtkSmartPointer<vtkDoubleArray>::New();
 	areas->SetName("Areas");
 	areas->SetNumberOfComponents(1);
-	areas->SetNumberOfTuples(cell_num);
 
 	for (int i = 0; i < cell_num; ++i)
 		dual_graph->AddVertex();
@@ -310,9 +304,11 @@ void MeshSegmenter::mergeClusters() {
 	using std::abs;
 	using std::array;
 	using std::set;
+	using std::unordered_map;
 	using std::vector;
 	using std::make_tuple;
 	using std::get;
+	
 	using HeapElem = std::tuple<int, double>;
 	class HeapElemComp {
 	public:
@@ -321,11 +317,19 @@ void MeshSegmenter::mergeClusters() {
 		}
 	};
 
-	vector<vector<double *>> util_values(this->seed_num);
+	struct Edge {
+		int a, b;
+		Edge(int a_, int b_) : a(a_), b(b_) {}
+		bool operator == (const Edge & e) const { return (a == e.a && b == e.b) || (a == e.b && b == e.a); }
+	};
+	auto EdgeHash = [&](const Edge & e) {
+		if (e.a < e.b) return e.a * this->seed_num + e.b;
+		else return e.b * this->seed_num + e.a;
+	};
+
+	unordered_map<Edge, array<double, 5>, decltype(EdgeHash)> util_values(this->seed_num, EdgeHash);
 	vtkSmartPointer<vtkEdgeListIterator> edgeIt =
 		vtkSmartPointer<vtkEdgeListIterator>::New();
-	for (int i = 0; i < this->seed_num; ++i)
-		util_values[i] = vector<double *>(this->seed_num);
 
 	this->dual_graph->GetEdges(edgeIt);
 	while (edgeIt->HasNext()) {
@@ -334,40 +338,31 @@ void MeshSegmenter::mergeClusters() {
 		cluster_num_a = this->face_id_to_cluster[edge.Source];
 		cluster_num_b = this->face_id_to_cluster[edge.Target];
 
+		Edge edge_ab(cluster_num_a, cluster_num_b);
+
 		if (cluster_num_a == cluster_num_b ||
 			cluster_num_a == -1 ||
 			cluster_num_b == -1)
 			continue;
 
-		if (util_values[cluster_num_a][cluster_num_b] == nullptr) {
-			util_values[cluster_num_a][cluster_num_b] = new double[5];
-			util_values[cluster_num_b][cluster_num_a] = new double[5];
-			for (int i = 0; i < 5; ++i) {
-				util_values[cluster_num_a][cluster_num_b][i] = 0.0;
-				util_values[cluster_num_b][cluster_num_a][i] = 0.0;
-			}
+		if (util_values.find(edge_ab) == util_values.end()) {
+			util_values.insert(make_pair(edge_ab, array<double, 5>()));
+			for (int i = 0; i < 5; ++i)
+				util_values[edge_ab][i] = 0.0;
 		}
 
-		double D1, L1;
-		D1 = util_values[cluster_num_a][cluster_num_b][0];
-		L1 = util_values[cluster_num_a][cluster_num_b][1];
-		
-		D1 += edge_lens->GetValue(edge.Id) * mesh_dis->GetValue(edge.Id);
-		L1 += edge_lens->GetValue(edge.Id);
-
-		util_values[cluster_num_a][cluster_num_b][0] = D1;
-		util_values[cluster_num_b][cluster_num_a][0] = D1;
-		util_values[cluster_num_a][cluster_num_b][1] = L1;
-		util_values[cluster_num_b][cluster_num_a][1] = L1;
+		util_values[edge_ab][0] += edge_lens->GetValue(edge.Id) * mesh_dis->GetValue(edge.Id);
+		util_values[edge_ab][1] += edge_lens->GetValue(edge.Id);
 	}
 
 	vector<array<double, 2>> sum_values(this->seed_num);
 	for (int i = 0; i < this->seed_num; ++i) {
 		double sum_D = 0.0, sum_L = 0.0;
 		for (int j = 0; j < this->seed_num; ++j) {
-			if (util_values[i][j]) {
-				sum_D += util_values[i][j][0];
-				sum_L += util_values[i][j][1];
+			Edge edge_ij(i, j);
+			if (util_values.find(edge_ij) != util_values.end()) {
+				sum_D += util_values[edge_ij][0];
+				sum_L += util_values[edge_ij][1];
 			}
 		}
 		sum_values[i][0] = sum_D;
@@ -375,13 +370,13 @@ void MeshSegmenter::mergeClusters() {
 	}
 
 	set<HeapElem, HeapElemComp> min_heap;
-	for (int i = 0; i < this->seed_num; ++i) for (int j = 0; j < this->seed_num; ++j) {
-		if (util_values[i][j]) {
-			util_values[i][j][2] = sum_values[i][0] + sum_values[j][0] - 2 * util_values[i][j][0];
-			util_values[i][j][3] = sum_values[i][1] + sum_values[j][1] - 2 * util_values[i][j][1];
-			util_values[i][j][4] = (util_values[i][j][0] / util_values[i][j][1]) / (util_values[i][j][2] / util_values[i][j][3]);
-			if (i < j)
-				min_heap.insert(make_tuple(i * this->seed_num + j, util_values[i][j][4]));
+	for (int i = 0; i < this->seed_num; ++i) for (int j = i + 1; j < this->seed_num; ++j) {
+		Edge edge_ij(i, j);
+		if (util_values.find(edge_ij) != util_values.end()) {
+			util_values[edge_ij][2] = sum_values[i][0] + sum_values[j][0] - 2 * util_values[edge_ij][0];
+			util_values[edge_ij][3] = sum_values[i][1] + sum_values[j][1] - 2 * util_values[edge_ij][1];
+			util_values[edge_ij][4] = (util_values[edge_ij][0] / util_values[edge_ij][1]) / (util_values[edge_ij][2] / util_values[edge_ij][3]);
+			min_heap.insert(make_tuple(i * this->seed_num + j, util_values[edge_ij][4]));
 		}
 	}
 
@@ -397,97 +392,71 @@ void MeshSegmenter::mergeClusters() {
 		cluster_num_a = get<0>(*min_heap.begin()) / this->seed_num;
 		cluster_num_b = get<0>(*min_heap.begin()) % this->seed_num;
 
-		sum_values[cluster_num_a][0] = util_values[cluster_num_a][cluster_num_b][2];
-		sum_values[cluster_num_a][1] = util_values[cluster_num_a][cluster_num_b][3];
+		Edge edge_ab(cluster_num_a, cluster_num_b);
+
+		sum_values[cluster_num_a][0] = util_values[edge_ab][2];
+		sum_values[cluster_num_a][1] = util_values[edge_ab][3];
 		for (int i = 0; i < this->seed_num; ++i) {
 			if (i == cluster_num_a ||
 				i == cluster_num_b)
 				continue;
 
-			if (util_values[cluster_num_a][i] && util_values[cluster_num_b][i]) {
-				util_values[cluster_num_a][i][0] += util_values[cluster_num_b][i][0];
-				util_values[cluster_num_a][i][1] += util_values[cluster_num_b][i][1];
-				util_values[cluster_num_a][i][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[cluster_num_a][i][0];
-				util_values[cluster_num_a][i][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[cluster_num_a][i][1];
+			Edge edge_ai(cluster_num_a, i);
+			Edge edge_bi(cluster_num_b, i);
 
-				util_values[i][cluster_num_a][0] = util_values[cluster_num_a][i][0];
-				util_values[i][cluster_num_a][1] = util_values[cluster_num_a][i][1];
-				util_values[i][cluster_num_a][2] = util_values[cluster_num_a][i][2];
-				util_values[i][cluster_num_a][3] = util_values[cluster_num_a][i][3];
+			if (util_values.find(edge_ai) != util_values.end() && 
+				util_values.find(edge_bi) != util_values.end()) {
 
-				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[cluster_num_a][i][4])));
-				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_b, i, this->seed_num), util_values[cluster_num_b][i][4])));
+				util_values[edge_ai][0] += util_values[edge_bi][0];
+				util_values[edge_ai][1] += util_values[edge_bi][1];
+				util_values[edge_ai][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[edge_ai][0];
+				util_values[edge_ai][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[edge_ai][1];
 
-				delete[] util_values[cluster_num_b][i];
-				delete[] util_values[i][cluster_num_b];
-				util_values[cluster_num_b][i] = nullptr;
-				util_values[i][cluster_num_b] = nullptr;
+				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[edge_ai][4])));
+				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_b, i, this->seed_num), util_values[edge_bi][4])));
+				util_values.erase(edge_bi);
+			} else if (util_values.find(edge_ai) != util_values.end() &&
+				util_values.find(edge_bi) == util_values.end()) {
 
-			} else if (util_values[cluster_num_a][i] && !util_values[cluster_num_b][i]) {
-				util_values[cluster_num_a][i][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[cluster_num_a][i][0];
-				util_values[cluster_num_a][i][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[cluster_num_a][i][1];
+				util_values[edge_ai][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[edge_ai][0];
+				util_values[edge_ai][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[edge_ai][1];
 
-				util_values[i][cluster_num_a][2] = util_values[cluster_num_a][i][2];
-				util_values[i][cluster_num_a][3] = util_values[cluster_num_a][i][3];
+				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[edge_ai][4])));
+			} else if (util_values.find(edge_ai) == util_values.end() &&
+				util_values.find(edge_bi) != util_values.end()) {
 
-				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[cluster_num_a][i][4])));
-			} else if (!util_values[cluster_num_a][i] && util_values[cluster_num_b][i]) {
-				util_values[cluster_num_a][i] = new double[5];
-				util_values[cluster_num_a][i][0] = util_values[cluster_num_b][i][0];
-				util_values[cluster_num_a][i][1] = util_values[cluster_num_b][i][1];
-				util_values[cluster_num_a][i][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[cluster_num_a][i][0];
-				util_values[cluster_num_a][i][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[cluster_num_a][i][1];
+				util_values.insert(make_pair(edge_ai, array<double, 5>()));
+				util_values[edge_ai][0] = util_values[edge_bi][0];
+				util_values[edge_ai][1] = util_values[edge_bi][1];
+				util_values[edge_ai][2] = sum_values[cluster_num_a][0] + sum_values[i][0] - 2 * util_values[edge_ai][0];
+				util_values[edge_ai][3] = sum_values[cluster_num_a][1] + sum_values[i][1] - 2 * util_values[edge_ai][1];
 
-				util_values[i][cluster_num_a] = new double[5];
-				util_values[i][cluster_num_a][0] = util_values[cluster_num_a][i][0];
-				util_values[i][cluster_num_a][1] = util_values[cluster_num_a][i][1];
-				util_values[i][cluster_num_a][2] = util_values[cluster_num_a][i][2];
-				util_values[i][cluster_num_a][3] = util_values[cluster_num_a][i][3];
-
-				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_b, i, this->seed_num), util_values[cluster_num_b][i][4])));
-
-				delete[] util_values[cluster_num_b][i];
-				delete[] util_values[i][cluster_num_b];
-				util_values[cluster_num_b][i] = nullptr;
-				util_values[i][cluster_num_b] = nullptr;
+				min_heap.erase(min_heap.find(make_tuple(computeHashValue(cluster_num_b, i, this->seed_num), util_values[edge_bi][4])));
+				util_values.erase(edge_bi);
 			} else
 				continue;
 
-			if (abs(util_values[cluster_num_a][i][1] * util_values[cluster_num_a][i][2]) < 1e-3) {
-				util_values[cluster_num_a][i][4] = DBL_MAX;
+			if (abs(util_values[edge_ai][1] * util_values[edge_ai][2]) < 1e-3) {
+				util_values[edge_ai][4] = DBL_MAX;
 			} else {
-				util_values[cluster_num_a][i][4] = 
-					(util_values[cluster_num_a][i][0] * util_values[cluster_num_a][i][3]) / 
-					(util_values[cluster_num_a][i][1] * util_values[cluster_num_a][i][2]);
+				util_values[edge_ai][4] =
+					(util_values[edge_ai][0] * util_values[edge_ai][3]) /
+					(util_values[edge_ai][1] * util_values[edge_ai][2]);
 			}
-			util_values[i][cluster_num_a][4] = util_values[cluster_num_a][i][4];
-			min_heap.insert(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[cluster_num_a][i][4]));
+			util_values[edge_ai][4] = util_values[edge_ai][4];
+			min_heap.insert(make_tuple(computeHashValue(cluster_num_a, i, this->seed_num), util_values[edge_ai][4]));
 		}
 
-		min_heap.erase(make_tuple(computeHashValue(cluster_num_a, cluster_num_b, this->seed_num), util_values[cluster_num_a][cluster_num_b][4]));
-		delete[] util_values[cluster_num_a][cluster_num_b];
-		delete[] util_values[cluster_num_b][cluster_num_a];
-		util_values[cluster_num_a][cluster_num_b] = nullptr;
-		util_values[cluster_num_b][cluster_num_a] = nullptr;
+		min_heap.erase(make_tuple(computeHashValue(cluster_num_a, cluster_num_b, this->seed_num), util_values[edge_ab][4]));
+		util_values.erase(edge_ab);
 
 		--remain_cluster_num;
 
-		std::cout << "remain_cluster_num = " << remain_cluster_num << std::endl;
-		std::cout << "cluster_num_a = " << cluster_num_a << std::endl;
-		std::cout << "cluster_num_b = " << cluster_num_b << std::endl;
-		std::cout << "min_heap.size() = " << min_heap.size() << std::endl;
 		for (int i = 0; i < this->seed_num; ++i) {
 			if (cluster_steps[this->seed_num - remain_cluster_num - 1][i] == cluster_num_b)
 				cluster_steps[this->seed_num - remain_cluster_num][i] = cluster_num_a;
 			else
 				cluster_steps[this->seed_num - remain_cluster_num][i] = cluster_steps[seed_num - remain_cluster_num - 1][i];
-			std::cout << i << " => " << cluster_steps[this->seed_num - remain_cluster_num][i] << std::endl;
 		}
-		std::cout << std::endl;
-	}
-
-	for (int i = 0; i < this->seed_num; ++i) for (int j = 0; j < this->seed_num; ++j) {
-		if (util_values[i][j])
-			delete[] util_values[i][j];
 	}
 }

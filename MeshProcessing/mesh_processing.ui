@@ -327,7 +327,7 @@
           <x>10</x>
           <y>10</y>
           <width>191</width>
-          <height>361</height>
+          <height>291</height>
          </rect>
         </property>
         <property name="title">
@@ -373,11 +373,21 @@
          <string>取消</string>
         </property>
        </widget>
+       <widget class="QSlider" name="cluster_num_slider">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>330</y>
+          <width>191</width>
+          <height>22</height>
+         </rect>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
       </widget>
      </widget>
-     <zorder>register_scroll_area</zorder>
-     <zorder>groupBox_3</zorder>
-     <zorder>segment_scroll_area</zorder>
     </widget>
    </widget>
    <widget class="QLabel" name="property_label">

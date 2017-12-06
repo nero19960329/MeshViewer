@@ -8,6 +8,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QScrollArea.h>
+#include <QtWidgets/QSlider>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QWidget>
@@ -63,6 +64,7 @@ private:
 	QPushButton * exit_icp_button_;
 	QPushButton * cancel_icp_button_;
 
+	QSlider * cluster_num_slider_;
 	QPushButton * run_segment_button_;
 	QPushButton * exit_segment_button_;
 	QPushButton * cancel_segment_button_;
@@ -87,6 +89,7 @@ public slots:
 	void OnRunICP();
 	void OnExitICP();
 	void OnCancelICP();
+	void OnClusterNumChanged(int n);
 	void OnRunSegment();
 	void OnExitSegment();
 	void OnCancelSegment();

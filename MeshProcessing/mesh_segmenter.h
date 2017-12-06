@@ -22,7 +22,9 @@ public:
 
 	void setMesh(vtkSmartPointer<vtkPolyData> mesh_) { mesh = mesh_; }
 
-	vtkSmartPointer<vtkPolyData> segment();
+	void segment();
+
+	vtkSmartPointer<vtkDoubleArray> getSegmentScalar(int n);
 
 private:
 	vtkSmartPointer<vtkMutableUndirectedGraph> calcDualGraph(double phy_ratio);

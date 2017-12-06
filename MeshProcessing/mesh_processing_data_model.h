@@ -8,6 +8,8 @@
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 
+#include "mesh_segmenter.h"
+
 class MeshProcessingDataModel {
 public:
 	MeshProcessingDataModel();
@@ -48,6 +50,8 @@ public:
 	std::vector<vtkSmartPointer<vtkActor>> fill_region_face_actor_vec_;
 
 	int source_id, target_id;
+
+	MeshSegmenter * mesh_segmenter_;
 	int segment_id;
 
 	vtkSmartPointer<vtkLookupTable> hueLut;
