@@ -44,6 +44,8 @@ public:
 	vtkSmartPointer<vtkActor> highlightVertex(vtkSmartPointer<vtkPolyData> mesh, vtkIdType id);
 	vtkSmartPointer<vtkActor> highlightFace(vtkSmartPointer<vtkPolyData> mesh, vtkIdType id);
 
+	vtkSmartPointer<vtkActor> addLine(double * p1, double * p2);
+
 	void updateTopText();
 	void updateBottomText(int number_of_points, int number_of_faces, int number_of_edges);
 

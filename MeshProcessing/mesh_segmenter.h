@@ -5,6 +5,8 @@
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 
+class VTKWidget;
+
 class MeshSegmenter {
 private:
 	vtkSmartPointer<vtkPolyData> mesh;
@@ -18,7 +20,10 @@ private:
 	std::vector<std::vector<int>> cluster_steps;
 
 public:
-	MeshSegmenter();
+	VTKWidget * vtk_widget_;
+
+public:
+	MeshSegmenter(int seed_num_, double phy_ratio_);
 
 	void setMesh(vtkSmartPointer<vtkPolyData> mesh_) { mesh = mesh_; }
 
@@ -28,7 +33,16 @@ public:
 
 private:
 	vtkSmartPointer<vtkMutableUndirectedGraph> calcDualGraph(double phy_ratio);
-	void randomSelectSeeds();
-	std::vector<double> calcDijkstraTable(int face_id);
+
+	vtkSmartPointer<vtkPolyData> removeAbnormalRegion(vtkSmartPointer<vtkPolyData> mesh);
+
+	void selectSeedsRandomly();
+	void selectSeedsByOctree();
+	
+	std::vector<std::vector<double>> calcMultiDijkstraTable(std::vector<int> face_ids);
+	std::vector<double> calcDijkstraTableWithMinHeap(int face_id);
+	std::vector<double> calcDijkstraTableWithFibHeap(int face_id);
+	std::vector<double> calcSPFATable(int face_id);
+
 	void mergeClusters();
 };

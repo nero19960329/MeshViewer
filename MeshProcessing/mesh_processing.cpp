@@ -36,10 +36,11 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 
 	this->mesh_processing_data_model_ = MeshProcessingDataModel::getInstance();
-	this->color_table_reader_ = new ColorTableReader;
+	this->color_table_handler_ = nullptr;
 	this->vtk_widget_ = ui.vtk_widget;
 	this->open_file_action_ = ui.open_file_action;
 	this->read_color_table_action_ = ui.read_color_table_action;
+	this->write_color_table_action_ = ui.write_color_table_action;
 	this->wireframe_mode_action_ = ui.wireframe_mode_action;
 	this->observe_mode_action_ = ui.observe_mode_action;
 	this->vertex_mode_action_ = ui.vertex_mode_action;
@@ -66,6 +67,8 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 	this->matrix_label_ = ui.matrix_label;
 	this->exit_icp_button_ = ui.exit_icp_button;
 	this->cancel_icp_button_ = ui.cancel_icp_button;
+	this->seed_num_spin_box_ = ui.seed_num_spin_box;
+	this->phy_ratio_double_spin_box_ = ui.phy_ratio_double_spin_box;
 	this->cluster_num_slider_ = ui.cluster_num_slider;
 	this->run_segment_button_ = ui.run_segment_button;
 	this->exit_segment_button_ = ui.exit_segment_button;
@@ -81,6 +84,7 @@ MeshProcessing::MeshProcessing(QWidget *parent) : QMainWindow(parent) {
 
 	connect(this->open_file_action_, SIGNAL(triggered()), this, SLOT(OnOpenFile()));
 	connect(this->read_color_table_action_, SIGNAL(triggered()), this, SLOT(OnReadColorTable()));
+	connect(this->write_color_table_action_, SIGNAL(triggered()), this, SLOT(OnWriteColorTable()));
 	connect(this->wireframe_mode_action_, SIGNAL(triggered()), this, SLOT(OnWireframeMode()));
 	connect(this->observe_mode_action_, SIGNAL(triggered()), this, SLOT(OnObserveMode()));
 	connect(this->vertex_mode_action_, SIGNAL(triggered()), this, SLOT(OnVertexMode()));
@@ -212,12 +216,13 @@ void MeshProcessing::OnReadColorTable() {
 		return;
 	}
 
+	this->color_table_handler_ = new ColorTableHandler;
 	QString file_path = QFileDialog::getOpenFileName(this, QString::fromLocal8Bit("打开文件"), "./", tr("txt Files(*.txt)"));
 	if (file_path.size() == 0) return;
 
-	this->color_table_reader_->setColorTableName(file_path);
-	this->color_table_reader_->setMesh(this->mesh_processing_data_model_->mesh_vec_[0]);
-	if (this->color_table_reader_->read() == false) {
+	this->color_table_handler_->setColorTableName(file_path);
+	this->color_table_handler_->setMesh(this->mesh_processing_data_model_->mesh_vec_[0]);
+	if (this->color_table_handler_->read() == false) {
 		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查颜色表文件是否正确！"));
 		return;
 	}
@@ -227,7 +232,21 @@ void MeshProcessing::OnReadColorTable() {
 	this->continuous_mode_action_->setEnabled(true);
 
 	QMessageBox::information(this, QString::fromLocal8Bit("提示"), QString::fromLocal8Bit("颜色表读取完毕！请选择着色模式！"));
-	return;
+}
+
+void MeshProcessing::OnWriteColorTable() {
+	if (this->color_table_handler_ == nullptr) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("当前没有颜色表！"));
+		return;
+	}
+
+	QString file_path = QFileDialog::getSaveFileName(this, QString::fromLocal8Bit("保存文件"), "", tr("txt Files(*.txt)"));
+	if (file_path.size() == 0) return;
+
+	this->color_table_handler_->setColorTableName(file_path);
+	this->color_table_handler_->write();
+
+	QMessageBox::information(this, QString::fromLocal8Bit("提示"), QString::fromLocal8Bit("颜色表导出完毕！"));
 }
 
 void MeshProcessing::OnWireframeMode() {
@@ -333,20 +352,20 @@ void MeshProcessing::OnDiscreteMode() {
 	}
 
 	this->mesh_processing_data_model_->display_mode_ = MeshProcessingDataModel::DISCRETE;
-	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_reader_->turnToDiscrete();
+	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_handler_->turnToDiscrete();
 
 	this->mesh_processing_data_model_->hueLut = vtkSmartPointer<vtkLookupTable>::New();
-	this->mesh_processing_data_model_->hueLut->SetNumberOfTableValues(this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+	this->mesh_processing_data_model_->hueLut->SetNumberOfTableValues(this->color_table_handler_->maxScalar() - this->color_table_handler_->minScalar() + 1);
 	this->mesh_processing_data_model_->hueLut->Build();
 
-	for (int i = 0; i < this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1; ++i) {
-		double hue = i * 1.0 / (this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+	for (int i = 0; i < this->color_table_handler_->maxScalar() - this->color_table_handler_->minScalar() + 1; ++i) {
+		double hue = i * 1.0 / (this->color_table_handler_->maxScalar() - this->color_table_handler_->minScalar() + 1);
 		double r, g, b;
 		vtkMath::HSVToRGB(hue, 1.0, 1.0, &r, &g, &b);
 		this->mesh_processing_data_model_->hueLut->SetTableValue(i, r, g, b, 1);
 	}
 
-	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(0, this->color_table_reader_->maxScalar() - this->color_table_reader_->minScalar() + 1);
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(0, this->color_table_handler_->maxScalar() - this->color_table_handler_->minScalar() + 1);
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarModeToUseCellData();
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetColorModeToMapScalars();
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetLookupTable(this->mesh_processing_data_model_->hueLut);
@@ -365,16 +384,16 @@ void MeshProcessing::OnContinuousMode() {
 	}
 
 	this->mesh_processing_data_model_->display_mode_ = MeshProcessingDataModel::CONTINUOUS;
-	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_reader_->turnToContinuous();
+	this->mesh_processing_data_model_->mesh_vec_[0] = this->color_table_handler_->turnToContinuous();
 
 	this->mesh_processing_data_model_->hueLut = vtkSmartPointer<vtkLookupTable>::New();
-	this->mesh_processing_data_model_->hueLut->SetTableRange(this->color_table_reader_->minScalar(), this->color_table_reader_->maxScalar() + 1);
+	this->mesh_processing_data_model_->hueLut->SetTableRange(this->color_table_handler_->minScalar(), this->color_table_handler_->maxScalar() + 1);
 	this->mesh_processing_data_model_->hueLut->SetHueRange(0, 1);
 	this->mesh_processing_data_model_->hueLut->SetSaturationRange(1, 1);
 	this->mesh_processing_data_model_->hueLut->SetValueRange(1, 1);
 	this->mesh_processing_data_model_->hueLut->Build();
 
-	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(this->color_table_reader_->minScalar(), this->color_table_reader_->maxScalar() + 1);
+	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarRange(this->color_table_handler_->minScalar(), this->color_table_handler_->maxScalar() + 1);
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetScalarModeToUseCellData();
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetColorModeToMapScalars();
 	this->mesh_processing_data_model_->actor_vec_[0]->GetMapper()->SetLookupTable(this->mesh_processing_data_model_->hueLut);
@@ -416,14 +435,8 @@ void MeshProcessing::OnICPRegistration() {
 }
 
 void MeshProcessing::OnSegment() {
-	std::vector<int> active_ids;
-	for (int i = 0; i < this->mesh_processing_data_model_->highlight_vec_.size(); ++i) {
-		if (this->mesh_processing_data_model_->highlight_vec_[i])
-			active_ids.push_back(i);
-	}
-
-	if (active_ids.size() != 1) {
-		QMessageBox::warning(this, QString::fromLocal8Bit("警告"), QString::fromLocal8Bit("请检查目前选中的网格数是否为1！"));
+	if (this->mesh_processing_data_model_->mesh_vec_.size() != 1) {
+		QMessageBox::critical(this, QString::fromLocal8Bit("错误"), QString::fromLocal8Bit("请检查目前读入的网格数是否为1！"));
 		return;
 	}
 
@@ -431,9 +444,18 @@ void MeshProcessing::OnSegment() {
 	OnWireframeMode();
 	this->disableAllActions();
 	this->OnObserveMode();
-	this->segment_scroll_area_->setVisible(true);
 
-	this->mesh_processing_data_model_->segment_id = active_ids.front();
+	if (this->color_table_handler_ != nullptr) {
+		this->default_mode_action_->setEnabled(false);
+		this->discrete_mode_action_->setEnabled(false);
+		this->continuous_mode_action_->setEnabled(false);
+		this->OnDefaultMode();
+	}
+
+	this->segment_scroll_area_->setVisible(true);
+	this->cluster_num_slider_->setEnabled(false);
+
+	this->mesh_processing_data_model_->segment_id = 0;
 
 	this->tab_widget_->setTabEnabled(0, false);
 	this->tab_widget_->setTabEnabled(1, true);
@@ -581,24 +603,38 @@ void MeshProcessing::OnCancelICP() {
 }
 
 void MeshProcessing::OnClusterNumChanged(int n) {
-	vtkSmartPointer<vtkDoubleArray> scalars = this->mesh_processing_data_model_->mesh_segmenter_->getSegmentScalar(n);
+	using std::vector;
 
+	this->color_table_handler_ = new ColorTableHandler;
+	this->color_table_handler_->setMesh(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]);
+
+	vector<double> color_value_vec;
+	vtkSmartPointer<vtkDoubleArray> scalars = this->mesh_processing_data_model_->mesh_segmenter_->getSegmentScalar(n);
 	this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]->GetCellData()->SetScalars(scalars);
-	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetProperty()->SetColor(0.0, 0.0, 0.0);
-	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetMapper()->ScalarVisibilityOn();
-	this->vtk_widget_->update();
+	for (int i = 0; i < scalars->GetNumberOfValues(); ++i)
+		color_value_vec.push_back(scalars->GetValue(i));
+	this->color_table_handler_->readColorValueVec(color_value_vec);
+
+	this->OnDiscreteMode();
 }
 
 void MeshProcessing::OnRunSegment() {
-	this->mesh_processing_data_model_->mesh_segmenter_ = new MeshSegmenter;
+	this->mesh_processing_data_model_->mesh_segmenter_ = new MeshSegmenter(this->seed_num_spin_box_->value(), this->phy_ratio_double_spin_box_->value());
+	this->mesh_processing_data_model_->mesh_segmenter_->vtk_widget_ = this->vtk_widget_;
 	this->mesh_processing_data_model_->mesh_segmenter_->setMesh(this->mesh_processing_data_model_->mesh_vec_[this->mesh_processing_data_model_->segment_id]);
 	this->mesh_processing_data_model_->mesh_segmenter_->segment();
 
+	this->cluster_num_slider_->setEnabled(true);
+	this->cluster_num_slider_->setValue(2);
+	this->OnClusterNumChanged(2);
+
 	this->cluster_num_slider_->setMinimum(2);
-	this->cluster_num_slider_->setMaximum(64);
+	this->cluster_num_slider_->setMaximum(this->seed_num_spin_box_->value());
 }
 
 void MeshProcessing::OnExitSegment() {
+	using std::vector;
+
 	this->tab_widget_->setTabEnabled(0, true);
 	this->tab_widget_->setTabEnabled(1, false);
 	this->tab_widget_->setCurrentIndex(0);
@@ -608,6 +644,10 @@ void MeshProcessing::OnExitSegment() {
 	this->matrix_label_->setText("");
 
 	this->enableAllActions();
+
+	this->default_mode_action_->setEnabled(true);
+	this->discrete_mode_action_->setEnabled(true);
+	this->continuous_mode_action_->setEnabled(true);
 
 	this->segment_scroll_area_->setVisible(false);
 	this->resetParameters();
@@ -623,6 +663,15 @@ void MeshProcessing::OnCancelSegment() {
 	this->matrix_label_->setText("");
 
 	this->enableAllActions();
+
+	this->default_mode_action_->setEnabled(false);
+	this->discrete_mode_action_->setEnabled(false);
+	this->continuous_mode_action_->setEnabled(false);
+
+	this->mesh_processing_data_model_->combined_mesh_->GetCellData()->SetScalars(nullptr);
+	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetProperty()->SetColor(.0, .5, 1.);
+	this->mesh_processing_data_model_->actor_vec_[this->mesh_processing_data_model_->segment_id]->GetMapper()->ScalarVisibilityOff();
+	this->vtk_widget_->update();
 
 	this->segment_scroll_area_->setVisible(false);
 	this->resetParameters();
@@ -714,24 +763,30 @@ void MeshProcessing::resetParameters() {
 			numberScalarArray->SetValue(i, i);
 
 		this->mesh_processing_data_model_->combined_mesh_->GetPointData()->AddArray(numberScalarArray);
-	} else this->mesh_processing_data_model_->combined_mesh_ = nullptr;
 
-	int edge_count = 0;
-	this->mesh_processing_data_model_->mean_edge_length = 0.0;
-	for (int i = 0; i < this->mesh_processing_data_model_->highlight_vec_.size(); ++i) {
-		if (this->mesh_processing_data_model_->highlight_vec_[i]) {
-			this->mesh_processing_data_model_->mean_edge_length += 
-				this->mesh_processing_data_model_->mesh_edge_vec_[i]->GetNumberOfLines() * this->mesh_processing_data_model_->mean_edge_length_vec_[i];
-			edge_count += this->mesh_processing_data_model_->mesh_edge_vec_[i]->GetNumberOfLines();
+		int edge_count = 0;
+		this->mesh_processing_data_model_->mean_edge_length = 0.0;
+		for (int i = 0; i < this->mesh_processing_data_model_->highlight_vec_.size(); ++i) {
+			if (this->mesh_processing_data_model_->highlight_vec_[i]) {
+				this->mesh_processing_data_model_->mean_edge_length +=
+					this->mesh_processing_data_model_->mesh_edge_vec_[i]->GetNumberOfLines() * this->mesh_processing_data_model_->mean_edge_length_vec_[i];
+				edge_count += this->mesh_processing_data_model_->mesh_edge_vec_[i]->GetNumberOfLines();
+			}
 		}
-	}
-	this->mesh_processing_data_model_->mean_edge_length /= edge_count;
+		this->mesh_processing_data_model_->mean_edge_length /= edge_count;
 
-	this->vtk_widget_->updateBottomText(
-		this->mesh_processing_data_model_->combined_mesh_->GetNumberOfPoints(),
-		this->mesh_processing_data_model_->combined_mesh_->GetNumberOfCells(),
-		num_edges
-	);
+		this->vtk_widget_->updateBottomText(
+			this->mesh_processing_data_model_->combined_mesh_->GetNumberOfPoints(),
+			this->mesh_processing_data_model_->combined_mesh_->GetNumberOfCells(),
+			num_edges
+		);
+	} else {
+		this->mesh_processing_data_model_->combined_mesh_ = nullptr;
+		this->mesh_processing_data_model_->mean_edge_length = 0.0;
+		this->vtk_widget_->updateBottomText(
+			0, 0, 0
+		);
+	}
 }
 
 void MeshProcessing::removeMeshActors() {
@@ -778,6 +833,7 @@ void MeshProcessing::enableAllActions() {
 	this->icp_registration_action_->setEnabled(true);
 	this->fill_region_three_vertices_action_->setEnabled(true);
 	this->fill_region_two_vertices_action_->setEnabled(true);
+	this->segment_action_->setEnabled(true);
 }
 
 void MeshProcessing::disableAllActions() {
@@ -792,4 +848,5 @@ void MeshProcessing::disableAllActions() {
 	this->icp_registration_action_->setEnabled(false);
 	this->fill_region_three_vertices_action_->setEnabled(false);
 	this->fill_region_two_vertices_action_->setEnabled(false);
+	this->segment_action_->setEnabled(false);
 }

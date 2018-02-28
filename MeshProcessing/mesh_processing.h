@@ -13,7 +13,7 @@
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QWidget>
 
-#include "color_table_reader.h"
+#include "color_table_handler.h"
 #include "mesh_processing_data_model.h"
 #include "ui_mesh_processing.h"
 #include "vtk_widget.h"
@@ -28,12 +28,13 @@ private:
 	Ui::MeshProcessingClass ui;
 
 	MeshProcessingDataModel * mesh_processing_data_model_;
-	ColorTableReader * color_table_reader_;
+	ColorTableHandler * color_table_handler_;
 
 	VTKWidget * vtk_widget_;
 
 	QAction * open_file_action_;
 	QAction * read_color_table_action_;
+	QAction * write_color_table_action_;
 	QAction * wireframe_mode_action_;
 	QAction * observe_mode_action_;
 	QAction * vertex_mode_action_;
@@ -64,6 +65,8 @@ private:
 	QPushButton * exit_icp_button_;
 	QPushButton * cancel_icp_button_;
 
+	QSpinBox * seed_num_spin_box_;
+	QDoubleSpinBox * phy_ratio_double_spin_box_;
 	QSlider * cluster_num_slider_;
 	QPushButton * run_segment_button_;
 	QPushButton * exit_segment_button_;
@@ -72,6 +75,7 @@ private:
 public slots:
 	void OnOpenFile();
 	void OnReadColorTable();
+	void OnWriteColorTable();
 	void OnWireframeMode();
 	void OnObserveMode();
 	void OnVertexMode();

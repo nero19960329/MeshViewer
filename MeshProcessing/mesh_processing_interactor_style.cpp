@@ -145,6 +145,7 @@ void MeshProcessingInteractorStyle::endPickingMultiVertex() {
 
 	vtkNew<vtkSelectVisiblePoints> selectFilter;
 	selectFilter->SetInputData(pts);
+	selectFilter->SetTolerance(1e-4);
 	selectFilter->SelectionWindowOn();
 	selectFilter->SetSelection(x1, x2, y1, y2);
 	selectFilter->SelectInvisibleOff();

@@ -7,20 +7,20 @@ class MinHeap {
 private:
 	HeapElem *a;
 	int *pos;
-	int size;
+	int size_;
 	HeapElemComp cmpFun;
 
 public:
-	MinHeap() : a(nullptr), size(0) {}
+	MinHeap() : a(nullptr), size_(0) {}
 
-	MinHeap(std::vector<HeapElem> input, int len) : size(len) {
-		a = new HeapElem[size];
-		for (int i = 0; i < size; ++i) a[i] = input[i];
+	MinHeap(std::vector<HeapElem> input, int len) : size_(len) {
+		a = new HeapElem[size_];
+		for (int i = 0; i < size_; ++i) a[i] = input[i];
 
-		pos = new int[size];
-		for (int i = 0; i < size; ++i) pos[i] = i;
+		pos = new int[size_];
+		for (int i = 0; i < size_; ++i) pos[i] = i;
 
-		for (int i = parent(size); i >= 0; --i) min_heapify(i);
+		for (int i = parent(size_); i >= 0; --i) minHeapify(i);
 	}
 
 	~MinHeap() {
@@ -28,23 +28,23 @@ public:
 		delete[] pos;
 	}
 
-	int Size() const { return size; }
+	unsigned int size() const { return (unsigned int)size_; }
 
-	HeapElem GetMinimum() const { return a[0]; }
+	HeapElem getMinimum() const { return a[0]; }
 
-	HeapElem ExtractMin() {
+	HeapElem extractMin() {
 		using std::swap;
 		using std::get;
 
 		HeapElem res = a[0];
-		swap(pos[get<0>(a[0])], pos[get<0>(a[size - 1])]);
-		a[0] = a[size - 1];
-		--size;
-		min_heapify(0);
+		swap(pos[get<0>(a[0])], pos[get<0>(a[size_ - 1])]);
+		a[0] = a[size_ - 1];
+		--size_;
+		minHeapify(0);
 		return res;
 	}
 
-	void DecreaseKey(const HeapElem& key) {
+	void decreaseKey(const HeapElem& key) {
 		using std::get;
 		using std::swap;
 
@@ -60,7 +60,7 @@ public:
 	}
 
 private:
-	void min_heapify(int i) {
+	void minHeapify(int i) {
 		using std::get;
 		using std::swap;
 
@@ -69,15 +69,15 @@ private:
 		r = l + 1;
 
 		int smallest;
-		if (l < size && cmpFun(a[l], a[i])) smallest = l;
+		if (l < size_ && cmpFun(a[l], a[i])) smallest = l;
 		else smallest = i;
 
-		if (r < size && cmpFun(a[r], a[smallest])) smallest = r;
+		if (r < size_ && cmpFun(a[r], a[smallest])) smallest = r;
 
 		if (smallest != i) {
 			swap(pos[get<0>(a[i])], pos[get<0>(a[smallest])]);
 			swap(a[i], a[smallest]);
-			min_heapify(smallest);
+			minHeapify(smallest);
 		}
 	}
 

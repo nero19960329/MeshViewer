@@ -3,6 +3,8 @@
 #include <vtkDataSetMapper.h>
 #include <vtkExtractSelection.h>
 #include <vtkIdTypeArray.h>
+#include <vtkLineSource.h>
+#include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkRenderWindow.h>
@@ -102,6 +104,7 @@ vtkSmartPointer<vtkActor> VTKWidget::highlightVertex(vtkSmartPointer<vtkPolyData
 		vtkSmartPointer<vtkSphereSource>::New();
 	sphereSource->SetCenter(this->mesh_processing_data_model_->combined_mesh_->GetPoint(id));
 	sphereSource->SetRadius(.2 * this->mesh_processing_data_model_->mean_edge_length);
+	//sphereSource->SetRadius(2.0);
 	sphereSource->SetThetaResolution(40);
 	sphereSource->SetPhiResolution(40);
 	sphereSource->Update();
@@ -153,6 +156,33 @@ vtkSmartPointer<vtkActor> VTKWidget::highlightFace(vtkSmartPointer<vtkPolyData> 
 	this->update();
 
 	return actor;
+}
+
+vtkSmartPointer<vtkActor> VTKWidget::addLine(double * p1, double * p2) {
+	vtkNew<vtkSphereSource> sphereSource1;
+	sphereSource1->SetCenter(p1);
+	sphereSource1->SetRadius(.2);
+	sphereSource1->SetThetaResolution(40);
+	sphereSource1->SetPhiResolution(40);
+	sphereSource1->Update();
+	auto actor = this->addActor(sphereSource1->GetOutput());
+	actor->GetProperty()->SetColor(.8, .2, .2);
+
+	vtkNew<vtkSphereSource> sphereSource2;
+	sphereSource2->SetCenter(p2);
+	sphereSource2->SetRadius(.2);
+	sphereSource2->SetThetaResolution(40);
+	sphereSource2->SetPhiResolution(40);
+	sphereSource2->Update();
+	this->addActor(sphereSource2->GetOutput());
+
+	vtkNew<vtkLineSource> lineSource;
+	lineSource->SetPoint1(p1);
+	lineSource->SetPoint2(p2);
+	lineSource->Update();
+	this->addActor(lineSource->GetOutput());
+
+	return nullptr;
 }
 
 void VTKWidget::updateTopText() {
